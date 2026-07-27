@@ -5,7 +5,7 @@ class Config(object):
     OWNER_ID = "8420981179"
     sudo_users = ["8297659126", "8420981179", "5147822244", "6863917190", "6416551017", "6110294479", "8064384504", "8133762943", "8390056096", "8455190450", "8507177995", "6831593338"]
     GROUP_ID = "-1003150808065"
-    TOKEN = "7891572866:AAGmXQEkplxmbWaoNKlRphxwesuH7HdcRWA"
+    TOKEN = "8785412311:AAEQ9cQCV_G2_p9Ch9BuEItn-OITP4WS3Mg"
     mongo_url = "mongodb+srv://teamdaxx123:teamdaxx123@cluster0.ysbpgcp.mongodb.net/?retryWrites=true&w=majority"
     PHOTO_URL = ["https://files.catbox.moe/8722ku.jpeg", "https://files.catbox.moe/kgcrnb.jpeg"]
     SUPPORT_CHAT = "PICK_X_SUPPORT"
