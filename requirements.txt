@@ -5,7 +5,7 @@ python-telegram-bot==22.3
 pymongo==4.15.3
 pyrate-limiter==3.1.0
 apscheduler>=3.6.3
-pillow==10.3.0
+pillow
 schedule>=1.0.0
 pyrogram==2.0.106
 tgcrypto>=1.0.0
