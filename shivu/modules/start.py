@@ -1,9 +1,12 @@
 import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import BadRequest, Forbidden
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 from shivu import application, SUPPORT_CHAT, BOT_USERNAME, LOGGER, user_collection
 
 START_VIDEO = "https://graph.org/file/fe64e239291abea3641fc-d6e78366c4d534a7c3.mp4"
+
+FORCE_SUB_CHAT = "anime_group_hai"
 
 MAIN_CAPTION = (
     f"✨ ʜᴇʏ ᴛʜᴇʀᴇ! ɪ'ᴍ {BOT_USERNAME}, ʏᴏᴜʀ ᴜʟᴛɪᴍᴀᴛᴇ ᴀɴɪᴍᴇ ᴀᴅᴠᴇɴᴛᴜʀᴇ ᴄᴏᴍᴘᴀɴɪᴏɴ. "
@@ -21,15 +24,28 @@ MAIN_KEYBOARD = [
     ]
 ]
 
-PAGE_SIZE = 3
+FORCE_SUB_TEXT = "🔒 <b>Join our updates channel to use this bot!</b>"
+
+FORCE_SUB_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton("Join Channel", url=f'https://t.me/{FORCE_SUB_CHAT}')],
+    [InlineKeyboardButton("Try Again", callback_data='sxc_checksub')]
+])
+
+PAGE_SIZE = 6
 CATEGORIES = {
     "basic": ("Basic Commands", [
         ("/start", "Start the bot"),
-        ("/grab", "Guess the character"),
+        ("/grab", "Grab the character"),
         ("/fav", "Add a character to your favourite"),
-        ("/harem", "View your collection"),
-        ("/bal", "Check your wallet"),
-        ("/pay", "Send gold to other users"),
+        ("/swaifu", "claim your daily waifu"),
+        ("/pay", "Give cash💸 to other users"),
+        ("/bal", "See your balence"),
+        ("/harem", "See your character's collection"),
+        ("/gift", "Gift your waifu to someone 🎀"),
+        ("/trade", "Trade characters between users"),
+        ("/tops", "View the leaderboard"),
+        ("/sprofile", "View your profile"),
+        ("/changetime", "Change the spawn time of characters [Owner/Admins]"),
     ]),
     "interactive": ("Interactive Commands", [
         ("/trade", "Trade characters with others"),
@@ -49,6 +65,19 @@ CATEGORIES = {
 }
 
 
+async def is_force_sub_member(user_id, context: CallbackContext):
+    try:
+        member = await context.bot.get_chat_member(f"@{FORCE_SUB_CHAT}", user_id)
+        return member.status not in ('left', 'kicked')
+    except Forbidden:
+        LOGGER.warning(f"Bot is not admin in @{FORCE_SUB_CHAT}")
+        return True
+    except BadRequest as e:
+        LOGGER.error(f"BadRequest checking force sub for {user_id}: {e}")
+        return True
+    except Exception as e:
+        LOGGER.error(f"Error checking force sub for {user_id}: {e}")
+        return True
 
 
 def menu_view():
@@ -122,6 +151,12 @@ async def start(update: Update, context: CallbackContext):
         first_name = update.effective_user.first_name or "User"
         username = update.effective_user.username or ""
 
+        if not await is_force_sub_member(user_id, context):
+            await update.message.reply_text(
+                FORCE_SUB_TEXT, parse_mode='HTML', reply_markup=FORCE_SUB_KEYBOARD
+            )
+            return
+
         user_data = await user_collection.find_one({"id": user_id})
         is_new = user_data is None
 
@@ -169,12 +204,46 @@ async def button_callback(update: Update, context: CallbackContext):
         return
 
     try:
+        data = query.data
+
+        if data == 'sxc_checksub':
+            if not await is_force_sub_member(query.from_user.id, context):
+                await query.answer("⚠️ You haven't joined yet!", show_alert=True)
+                return
+            first_name = query.from_user.first_name or "User"
+            username = query.from_user.username or ""
+            user_data = await user_collection.find_one({"id": query.from_user.id})
+            if not user_data:
+                await user_collection.insert_one({
+                    "id": query.from_user.id, "first_name": first_name, "username": username,
+                    "balance": 500, "characters": [],
+                    "pass_data": {
+                        "tier": "free", "weekly_claims": 0, "last_weekly_claim": None,
+                        "streak_count": 0, "last_streak_claim": None,
+                        "tasks": {"weekly_claims": 0, "grabs": 0},
+                        "mythic_unlocked": False, "premium_expires": None,
+                        "elite_expires": None, "pending_elite_payment": None
+                    }
+                })
+            await query.message.delete()
+            await context.bot.send_video(
+                chat_id=query.from_user.id,
+                video=START_VIDEO,
+                caption=MAIN_CAPTION,
+                reply_markup=InlineKeyboardMarkup(MAIN_KEYBOARD),
+                parse_mode='HTML',
+                supports_streaming=True
+            )
+            return
+
+        if not await is_force_sub_member(query.from_user.id, context):
+            await query.answer("⚠️ Join our channel first!", show_alert=True)
+            return
+
         user_data = await user_collection.find_one({"id": query.from_user.id})
         if not user_data:
             await query.answer("⚠️ sᴛᴀʀᴛ ʙᴏᴛ ғɪʀsᴛ", show_alert=True)
             return
-
-        data = query.data
 
         if data == 'sxc_credits':
             text, markup = credits_view()
