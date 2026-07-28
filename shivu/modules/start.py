@@ -149,7 +149,7 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
 
             for i in range(0, len(OWNERS), 2):
                 owner_row = [
-                    InlineKeyboardButton(f"👑 {o['name']}", url=f"https://t.me/{o['username'].replace('@', '')}")
+                    InlineKeyboardButton(f" {o['name']}", url=f"https://t.me/{o['username'].replace('@', '')}")
                     for o in OWNERS[i:i+2]
                 ]
                 if owner_row:
@@ -176,8 +176,7 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
                 LOGGER.error(f"Error fetching sudo users: {e}")
 
             text += "\n\n<b>🔐 ᴅᴇᴠᴇʟᴏᴘᴇʀ</b>"
-            buttons.append([InlineKeyboardButton("💎 @siyaprobot", url="https://t.me/siyaprobot")])
-            buttons.append([InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')])
+           buttons.append([InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')])
 
             await query.message.delete()
             await context.bot.send_message(
