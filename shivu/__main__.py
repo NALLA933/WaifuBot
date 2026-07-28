@@ -421,44 +421,24 @@ async def guess(update: Update, context: CallbackContext) -> None:
 
 
 async def main():
-    """Main async entry point - single event loop for everything"""
+    await shivuu.start()
+
+    application.add_handler(CommandHandler(["grab", "g"], guess, block=False))
+    application.add_handler(MessageHandler(filters.ALL, message_counter, block=False))
+
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling(drop_pending_updates=True)
+
+    LOGGER.info("Bot started!")
+
     try:
-        await shivuu.start()
-
-        application.add_handler(CommandHandler(["grab", "g"], guess, block=False))
-        application.add_handler(MessageHandler(filters.ALL, message_counter, block=False))
-
-        await application.initialize()
-        await application.start()
-        await application.updater.start_polling(drop_pending_updates=True)
-
-        LOGGER.info("✅ ʏᴏɪᴄʜɪ ʀᴀɴᴅɪ ʙᴏᴛ sᴛᴀʀᴛᴇᴅ")
-
-        while True:
-            await asyncio.sleep(3600)
-
-    except Exception as e:
-        LOGGER.exception("Bot crashed")
-        traceback.print_exc()
-
+        await asyncio.Event().wait()   # keeps the bot alive forever
     finally:
-        try:
-            await application.updater.stop()
-        except Exception:
-            pass
-
-        try:
-            await application.stop()
-        except Exception:
-            pass
-
-        try:
-            await application.shutdown()
-        except Exception:
-            pass
-
-        try:
-            await shivuu.stop()
+        await application.updater.stop()
+        await application.stop()
+        await application.shutdown()
+        await shivuu.stop()
         except Exception:
             pass
 
