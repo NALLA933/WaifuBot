@@ -13,7 +13,7 @@ VIDEOS = [
 
 START_VIDEO = "https://graph.org/file/fe64e239291abea3641fc-d6e78366c4d534a7c3.mp4"
 
-OWNERS = [{"name": "Thorfinn", "username": "ll_Thorfinn_ll"}]
+OWNERS = [{"name": "ＩＭ 𖣘︎ ＵＣＨＩＨＡ", "username": "@iMSASUKESi"}]
 SUDO_USERS = [{"name": "Shadwoo", "username": "I_shadwoo"}]
 
 
