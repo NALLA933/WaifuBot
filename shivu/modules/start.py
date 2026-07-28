@@ -48,12 +48,7 @@ CATEGORIES = {
     ]),
 }
 
-CREDITS_TEXT = (
-    "<b>🩵 Bot Credits</b>\n\n"
-    "Owner: @ll_Thorfinn_ll\n"
-    "Sudo: @I_shadwoo\n\n"
-    "Bugs/errors: @slavesupport"
-)
+
 
 
 def menu_view():
@@ -86,9 +81,24 @@ def category_view(cat_key: str, page: int = 1):
     return text, InlineKeyboardMarkup(kb)
 
 
+CREDITS_USERS = [
+    ("ＩＭ 𖣘 ＵＣＨＩＨＡ", "@iMSASUKESi"),
+]
+
+
 def credits_view():
-    kb = [[InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='sxc_back')]]
-    return CREDITS_TEXT, InlineKeyboardMarkup(kb)
+    text = "SUDOS:"
+    kb = []
+    row = []
+    for name, username in CREDITS_USERS:
+        row.append(InlineKeyboardButton(name, url=f'https://t.me/{username}'))
+        if len(row) == 2:
+            kb.append(row)
+            row = []
+    if row:
+        kb.append(row)
+    kb.append([InlineKeyboardButton("BACK", callback_data='sxc_back')])
+    return text, InlineKeyboardMarkup(kb)
 
 
 async def safe_track_bot_start(user_id, first_name, username, is_new_user):
