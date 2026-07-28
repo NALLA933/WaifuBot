@@ -114,16 +114,33 @@ CREDITS_USERS = [
     ("ＩＭ 𖣘 ＵＣＨＩＨＡ", "@iMSASUKESi"),
 ]
 
+_credits_id_cache = {}
 
-def credits_view():
+
+async def credits_view(context: CallbackContext):
     text = "SUDOS:"
     kb = []
     row = []
     for name, username in CREDITS_USERS:
-        row.append(InlineKeyboardButton(name, url=f't.me/{username}'))
+        user_id = _credits_id_cache.get(username)
+        if user_id is None:
+            try:
+                chat = await context.bot.get_chat(username)
+                user_id = chat.id
+                _credits_id_cache[username] = user_id
+            except (BadRequest, Forbidden) as e:
+                LOGGER.error(f"Could not resolve {username}: {e}")
+                row.append(InlineKeyboardButton(name, url=f'https://t.me/{username.lstrip("@")}'))
+                if len(row) == 2:
+                    kb.append(row)
+                    row = []
+                continue
+
+        row.append(InlineKeyboardButton(name, url=f'tg://user?id={user_id}'))
         if len(row) == 2:
             kb.append(row)
             row = []
+
     if row:
         kb.append(row)
     kb.append([InlineKeyboardButton("BACK", callback_data='sxc_back')])
@@ -246,7 +263,7 @@ async def button_callback(update: Update, context: CallbackContext):
             return
 
         if data == 'sxc_credits':
-            text, markup = credits_view()
+            text, markup = await credits_view(context)
         elif data in ('sxc_help', 'sxc_menu'):
             text, markup = menu_view()
         elif data.startswith('sxc_cat_'):
