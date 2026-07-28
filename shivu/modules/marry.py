@@ -11,7 +11,7 @@ from shivu import application, user_collection, collection
 PROPOSAL_COST = 2000 
 DICE_COOLDOWN = 1800  
 PROPOSE_COOLDOWN = 300  
-UPDATE_CHANNEL = "@PICK_X_UPDATE" 
+UPDATE_CHANNEL = "@Anime_Group_hai" 
 LOG_GROUP_ID = -1003139865857     
 PROPOSE_SUCCESS_RATE = 1/6 # 16.6% Chance (Half of Dice Marry)
 
