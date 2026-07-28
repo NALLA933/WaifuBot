@@ -477,7 +477,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) the bot alive forever
+    asyncio.run(main())
     finally:
         await application.updater.stop()
         await application.stop()
