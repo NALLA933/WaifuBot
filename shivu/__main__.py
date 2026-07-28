@@ -420,8 +420,6 @@ async def guess(update: Update, context: CallbackContext) -> None:
 
 
 
-import asyncio
-import traceback
 
 async def main():
     """Main async entry point"""
@@ -478,17 +476,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-    finally:
-        await application.updater.stop()
-        await application.stop()
-        await application.shutdown()
-        await shivuu.stop()
-        except Exception:
-            pass
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        LOGGER.info("Bot stopped by user.")
