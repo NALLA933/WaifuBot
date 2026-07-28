@@ -15,25 +15,20 @@ from shivu.modules.hstyle import get_user_style_template, get_user_display_optio
 
 class RarityType(Enum):
     COMMON = ("common", "🟢 Common")
-    RARE = ("rare", "🟣 Rare")
-    LEGENDARY = ("legendary", "🟡 Legendary")
-    SPECIAL = ("special", "💮 Special Edition")
-    NEON = ("neon", "💫 Neon")
-    MANGA = ("manga", "✨ Manga")
-    COSPLAY = ("cosplay", "🎭 Cosplay")
-    CELESTIAL = ("celestial", "🎐 Celestial")
-    PREMIUM = ("premium", "🔮 Premium Edition")
-    EROTIC = ("erotic", "💋 Erotic")
-    SUMMER = ("summer", "🌤 Summer")
-    WINTER = ("winter", "☃️ Winter")
-    MONSOON = ("monsoon", "☔️ Monsoon")
-    VALENTINE = ("valentine", "💝 Valentine")
-    HALLOWEEN = ("halloween", "🎃 Halloween")
-    CHRISTMAS = ("christmas", "🎄 Christmas")
-    MYTHIC = ("mythic", "🏵 Mythic")
-    EVENTS = ("events", "🎗 Special Events")
-    AMV = ("amv", "🎥 AMV")
-    TINY = ("tiny", "👼 Tiny")
+    RARE = ("rare", "🔵 Rare")
+    LEGENDARY = ("legendary", "🟠 Legendary")
+    SPECIAL = ("special", "🟡 Special Edition")
+    CELESTIAL = ("celestial", "🪽 Celestial")
+    EROTIC = ("erotic", "🥵 Erotic")
+    EXCLUSIVE = ("exclusive", "🥴 Exclusive")
+    PREMIUM = ("premium", "💎 Premium Edition")
+    MYTHIC = ("mythic", "🔮 Mythic")
+    SWEET = ("sweet", "🍭 Sweet")
+    VALENTINE = ("valentine", "💋 Valentine")
+    WINTER = ("winter", "❄️ Winter")
+    NEON = ("neon", "⚡ Neon")
+    PEARL = ("pearl", "🐚 Pearl")
+    COSMIC = ("cosmic", "🌌 Cosmic")
     DEFAULT = ("default", None)
 
     @classmethod
@@ -363,23 +358,21 @@ class HaremHandler:
 
             keyboard = [
                 [InlineKeyboardButton(
-                    f"🎭 View All ({len(filtered_chars)})",
+                    f"✨ slaves ({len(filtered_chars)})",
                     switch_inline_query_current_chat=f"collection.{user_id}"
                 )]
             ]
 
-            if total_pages > 1:
-                nav_buttons = []
-                if page > 0:
-                    nav_buttons.append(InlineKeyboardButton(
-                        "⬅️ Prev", callback_data=f"harem_page:{page - 1}:{user_id}"
-                    ))
-                if page < total_pages - 1:
-                    nav_buttons.append(InlineKeyboardButton(
-                        "Next ➡️", callback_data=f"harem_page:{page + 1}:{user_id}"
-                    ))
-                if nav_buttons:
-                    keyboard.append(nav_buttons)
+            nav_row = []
+            if page > 0:
+                nav_row.append(InlineKeyboardButton("Previous", callback_data=f"harem_page:{page - 1}:{user_id}"))
+            if page < total_pages - 1:
+                nav_row.append(InlineKeyboardButton("Next", callback_data=f"harem_page:{page + 1}:{user_id}"))
+            if nav_row:
+                keyboard.append(nav_row)
+
+            keyboard.append([InlineKeyboardButton("▶ 5x", callback_data=f"harem_5x:{user_id}")])
+            keyboard.append([InlineKeyboardButton("Close", callback_data=f"harem_close:{user_id}")])
 
             reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -478,57 +471,71 @@ class ModeHandler:
             print(f"Error in show_mode_menu: {e}")
             traceback.print_exc()
 
+    async def harem_5x_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    try:
+        _, user_id_str = query.data.split(':')
+        if query.from_user.id != int(user_id_str):
+            await query.answer("⚠️ This is not your collection!", show_alert=True)
+            return
+        await query.answer("🔜 5x view coming soon", show_alert=True)
+    except Exception as e:
+        print(f"Error in harem_5x_callback: {e}")
+        traceback.print_exc()
+
+
+async def harem_close_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    try:
+        _, user_id_str = query.data.split(':')
+        if query.from_user.id != int(user_id_str):
+            await query.answer("⚠️ This is not your collection!", show_alert=True)
+            return
+        await query.answer()
+        await query.message.delete()
+    except Exception as e:
+        print(f"Error in harem_close_callback: {e}")
+        traceback.print_exc()
+
     async def show_rarity_menu(self, query):
         try:
             keyboard = [
                 [
                     InlineKeyboardButton("🟢", callback_data="harem_mode_common"),
-                    InlineKeyboardButton("🟣", callback_data="harem_mode_rare"),
-                    InlineKeyboardButton("🟡", callback_data="harem_mode_legendary"),
+                    InlineKeyboardButton("🔵", callback_data="harem_mode_rare"),
+                    InlineKeyboardButton("🟠", callback_data="harem_mode_legendary"),
                 ],
                 [
-                    InlineKeyboardButton("💮", callback_data="harem_mode_special"),
-                    InlineKeyboardButton("💫", callback_data="harem_mode_neon"),
-                    InlineKeyboardButton("✨", callback_data="harem_mode_manga"),
+                    InlineKeyboardButton("🟡", callback_data="harem_mode_special"),
+                    InlineKeyboardButton("🪽", callback_data="harem_mode_celestial"),
+                    InlineKeyboardButton("🥵", callback_data="harem_mode_erotic"),
                 ],
                 [
-                    InlineKeyboardButton("🎭", callback_data="harem_mode_cosplay"),
-                    InlineKeyboardButton("🎐", callback_data="harem_mode_celestial"),
-                    InlineKeyboardButton("🔮", callback_data="harem_mode_premium"),
+                    InlineKeyboardButton("🥴", callback_data="harem_mode_exclusive"),
+                    InlineKeyboardButton("💎", callback_data="harem_mode_premium"),
+                    InlineKeyboardButton("🔮", callback_data="harem_mode_mythic"),
                 ],
                 [
-                    InlineKeyboardButton("💋", callback_data="harem_mode_erotic"),
-                    InlineKeyboardButton("🌤", callback_data="harem_mode_summer"),
-                    InlineKeyboardButton("☃️", callback_data="harem_mode_winter"),
+                    InlineKeyboardButton("🍭", callback_data="harem_mode_sweet"),
+                    InlineKeyboardButton("💋", callback_data="harem_mode_valentine"),
+                    InlineKeyboardButton("❄️", callback_data="harem_mode_winter"),
                 ],
                 [
-                    InlineKeyboardButton("☔️", callback_data="harem_mode_monsoon"),
-                    InlineKeyboardButton("💝", callback_data="harem_mode_valentine"),
-                    InlineKeyboardButton("🎃", callback_data="harem_mode_halloween"),
+                    InlineKeyboardButton("⚡", callback_data="harem_mode_neon"),
+                    InlineKeyboardButton("🐚", callback_data="harem_mode_pearl"),
+                    InlineKeyboardButton("🌌", callback_data="harem_mode_cosmic"),
                 ],
                 [
-                    InlineKeyboardButton("🎄", callback_data="harem_mode_christmas"),
-                    InlineKeyboardButton("🏵", callback_data="harem_mode_mythic"),
-                    InlineKeyboardButton("🎗", callback_data="harem_mode_events"),
-                ],
-                [
-                    InlineKeyboardButton("🎥", callback_data="harem_mode_amv"),
-                    InlineKeyboardButton("👼", callback_data="harem_mode_tiny"),
-                ],
-                [
-                    InlineKeyboardButton("« ʙᴀᴄᴋ", callback_data="harem_mode_back"),
+                    InlineKeyboardButton("🗑 Close", callback_data="harem_mode_back"),
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
             message_text = (
-                "╭─────────────────╮\n"
-                "│ <b>ʀᴀʀɪᴛʏ ғɪʟᴛᴇʀ</b>  │\n"
-                "╰─────────────────╯\n\n"
-                "     ◇ sᴇʟᴇᴄᴛ ᴛɪᴇʀ ◇\n\n"
-                "┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈\n\n"
-                "ᴄʜᴏᴏsᴇ ᴀ ʀᴀʀɪᴛʏ ᴇᴍᴏᴊɪ\n"
-                "ᴛᴏ ғɪʟᴛᴇʀ ʏᴏᴜʀ ᴄᴏʟʟᴇᴄᴛɪᴏɴ"
+                "🪄 <b>HAREM RARITY SELECTOR</b>\n\n"
+                "🎯 Select a rarity below to filter your harem view.\n"
+                "✅ Current selected rarity will be marked.\n\n"
+                "Tap a rarity or close this menu anytime."
             )
 
             await query.edit_message_text(
@@ -840,3 +847,5 @@ application.add_handler(CommandHandler("unfav", unfav_command, block=False))
 application.add_handler(CallbackQueryHandler(harem_page_callback, pattern='^harem_page:', block=False))
 application.add_handler(CallbackQueryHandler(mode_callback, pattern='^harem_mode_', block=False))
 application.add_handler(CallbackQueryHandler(unfav_callback, pattern="^harem_unfav_", block=False))
+application.add_handler(CallbackQueryHandler(harem_5x_callback, pattern='^harem_5x:', block=False))
+application.add_handler(CallbackQueryHandler(harem_close_callback, pattern='^harem_close:', block=False))
