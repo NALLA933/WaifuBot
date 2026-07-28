@@ -12,6 +12,8 @@ VIDEOS = [
     "https://files.catbox.moe/hs0e56.mp4"
 ]
 
+START_VIDEO = "https://graph.org/file/fe64e239291abea3641fc-d6e78366c4d534a7c3.mp4"
+
 OWNERS = [{"name": "Thorfinn", "username": "ll_Thorfinn_ll"}]
 SUDO_USERS = [{"name": "Shadwoo", "username": "I_shadwoo"}]
 
@@ -87,7 +89,6 @@ async def start(update: Update, context: CallbackContext):
                 safe_track_bot_start(user_id, first_name, username, False)
             )
 
-        video_url = random.choice(VIDEOS)
         caption = f"✨ ʜᴇʏ ᴛʜᴇʀᴇ! ɪ'ᴍ {BOT_USERNAME}, ʏᴏᴜʀ ᴜʟᴛɪᴍᴀᴛᴇ ᴀɴɪᴍᴇ ᴀᴅᴠᴇɴᴛᴜʀᴇ ᴄᴏᴍᴘᴀɴɪᴏɴ. ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ʟᴇᴛ ᴛʜᴇ ғᴜɴ ʙᴇɢɪɴ!"
 
         keyboard = [
@@ -102,15 +103,12 @@ async def start(update: Update, context: CallbackContext):
             ]
         ]
 
-        await update.message.reply_text(
-            text=caption,
+        await update.message.reply_video(
+            video=START_VIDEO,
+            caption=caption,
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode='HTML',
-            link_preview_options=LinkPreviewOptions(
-                url=video_url,
-                show_above_text=True,
-                prefer_large_media=True
-            )
+            supports_streaming=True
         )
 
         LOGGER.info(f"Start command completed for user {user_id}")
@@ -183,7 +181,9 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
             buttons.append([InlineKeyboardButton("💎 @siyaprobot", url="https://t.me/siyaprobot")])
             buttons.append([InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')])
 
-            await query.edit_message_text(
+            await query.message.delete()
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
                 text=text,
                 reply_markup=InlineKeyboardMarkup(buttons),
                 parse_mode='HTML',
@@ -206,7 +206,9 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
 
             keyboard = [[InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')]]
 
-            await query.edit_message_text(
+            await query.message.delete()
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
                 text=text,
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode='HTML',
@@ -228,11 +230,14 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
                 ]
             ]
 
-            await query.edit_message_text(
-                text=caption,
+            await query.message.delete()
+            await context.bot.send_video(
+                chat_id=query.message.chat_id,
+                video=START_VIDEO,
+                caption=caption,
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode='HTML',
-                link_preview_options=LinkPreviewOptions(url=video_url, show_above_text=True, prefer_large_media=True)
+                supports_streaming=True
             )
 
     except Exception as e:
