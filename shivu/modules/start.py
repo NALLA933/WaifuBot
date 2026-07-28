@@ -7,9 +7,7 @@ from shivu.modules.database.sudo import fetch_sudo_users
 import asyncio
 
 VIDEOS = [
-    "https://files.catbox.moe/k3dhbe.mp4",
-    "https://files.catbox.moe/iitev2.mp4",
-    "https://files.catbox.moe/hs0e56.mp4"
+    "https://graph.org/file/fe64e239291abea3641fc-d6e78366c4d534a7c3.mp4"
 ]
 
 START_VIDEO = "https://graph.org/file/fe64e239291abea3641fc-d6e78366c4d534a7c3.mp4"
