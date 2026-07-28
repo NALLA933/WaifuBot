@@ -420,20 +420,64 @@ async def guess(update: Update, context: CallbackContext) -> None:
 
 
 
+import asyncio
+import traceback
+
 async def main():
-    await shivuu.start()
-
-    application.add_handler(CommandHandler(["grab", "g"], guess, block=False))
-    application.add_handler(MessageHandler(filters.ALL, message_counter, block=False))
-
-    await application.initialize()
-    await application.start()
-    await application.updater.start_polling(drop_pending_updates=True)
-
-    LOGGER.info("Bot started!")
+    """Main async entry point"""
 
     try:
-        await asyncio.Event().wait()   # keeps the bot alive forever
+        # Start Pyrogram client
+        await shivuu.start()
+
+        # Register handlers
+        application.add_handler(
+            CommandHandler(["grab", "g"], guess, block=False)
+        )
+        application.add_handler(
+            MessageHandler(filters.ALL, message_counter, block=False)
+        )
+
+        # Start Telegram Bot API application
+        await application.initialize()
+        await application.start()
+        await application.updater.start_polling(drop_pending_updates=True)
+
+        LOGGER.info("✅ ʏᴏɪᴄʜɪ ʀᴀɴᴅɪ ʙᴏᴛ sᴛᴀʀᴛᴇᴅ")
+
+        # Keep the bot running
+        await asyncio.Event().wait()
+
+    except Exception as e:
+        LOGGER.exception("Bot crashed!")
+        traceback.print_exc()
+
+    finally:
+        LOGGER.info("Stopping bot...")
+
+        try:
+            await application.updater.stop()
+        except Exception:
+            pass
+
+        try:
+            await application.stop()
+        except Exception:
+            pass
+
+        try:
+            await application.shutdown()
+        except Exception:
+            pass
+
+        try:
+            await shivuu.stop()
+        except Exception:
+            pass
+
+
+if __name__ == "__main__":
+    asyncio.run(main()) the bot alive forever
     finally:
         await application.updater.stop()
         await application.stop()
