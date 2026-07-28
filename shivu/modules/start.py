@@ -176,7 +176,7 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
                 LOGGER.error(f"Error fetching sudo users: {e}")
 
             text += "\n\n<b>🔐 ᴅᴇᴠᴇʟᴏᴘᴇʀ</b>"
-           buttons.append([InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')])
+buttons.append([InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')])
 
             await query.message.delete()
             await context.bot.send_message(
