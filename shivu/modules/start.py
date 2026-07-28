@@ -1,6 +1,5 @@
-
 import random
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, LinkPreviewOptions
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaVideo, Update
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 from shivu import application, SUPPORT_CHAT, BOT_USERNAME, LOGGER, user_collection
 from shivu.modules.chatlog import track_bot_start
@@ -13,7 +12,7 @@ VIDEOS = [
 
 START_VIDEO = "https://graph.org/file/fe64e239291abea3641fc-d6e78366c4d534a7c3.mp4"
 
-OWNERS = [{"name": "ＩＭ 𖣘︎ ＵＣＨＩＨＡ", "username": "@iMSASUKESi"}]
+OWNERS = [{"name": "Thorfinn", "username": "ll_Thorfinn_ll"}]
 SUDO_USERS = [{"name": "Shadwoo", "username": "I_shadwoo"}]
 
 
@@ -179,13 +178,14 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
             text += "\n\n<b>🔐 ᴅᴇᴠᴇʟᴏᴘᴇʀ</b>"
             buttons.append([InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')])
 
-            await query.message.delete()
-            await context.bot.send_message(
-                chat_id=query.message.chat_id,
-                text=text,
-                reply_markup=InlineKeyboardMarkup(buttons),
-                parse_mode='HTML',
-                link_preview_options=LinkPreviewOptions(url=video_url, show_above_text=True, prefer_large_media=True)
+            await query.edit_message_media(
+                media=InputMediaVideo(
+                    media=video_url,
+                    caption=text,
+                    parse_mode='HTML',
+                    supports_streaming=True
+                ),
+                reply_markup=InlineKeyboardMarkup(buttons)
             )
 
         elif query.data == 'help':
@@ -204,13 +204,14 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
 
             keyboard = [[InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')]]
 
-            await query.message.delete()
-            await context.bot.send_message(
-                chat_id=query.message.chat_id,
-                text=text,
-                reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode='HTML',
-                link_preview_options=LinkPreviewOptions(url=video_url, show_above_text=True, prefer_large_media=True)
+            await query.edit_message_media(
+                media=InputMediaVideo(
+                    media=video_url,
+                    caption=text,
+                    parse_mode='HTML',
+                    supports_streaming=True
+                ),
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
         elif query.data == 'back':
@@ -228,14 +229,14 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
                 ]
             ]
 
-            await query.message.delete()
-            await context.bot.send_video(
-                chat_id=query.message.chat_id,
-                video=START_VIDEO,
-                caption=caption,
-                reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode='HTML',
-                supports_streaming=True
+            await query.edit_message_media(
+                media=InputMediaVideo(
+                    media=START_VIDEO,
+                    caption=caption,
+                    parse_mode='HTML',
+                    supports_streaming=True
+                ),
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
     except Exception as e:
