@@ -418,6 +418,8 @@ async def guess(update: Update, context: CallbackContext) -> None:
         pass
 
 
+
+
 async def main():
     """Main async entry point - single event loop for everything"""
     try:
@@ -435,24 +437,34 @@ async def main():
         while True:
             await asyncio.sleep(3600)
 
-    except Exception:
-        pass
+    except Exception as e:
+        LOGGER.exception("Bot crashed")
+        traceback.print_exc()
+
     finally:
         try:
+            await application.updater.stop()
+        except Exception:
+            pass
+
+        try:
             await application.stop()
+        except Exception:
+            pass
+
+        try:
             await application.shutdown()
+        except Exception:
+            pass
+
+        try:
             await shivuu.stop()
         except Exception:
             pass
 
+
 if __name__ == "__main__":
     try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-    try:
-        loop.run_until_complete(main())
+        asyncio.run(main())
     except KeyboardInterrupt:
-        pass
+        LOGGER.info("Bot stopped by user.")
