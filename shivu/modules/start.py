@@ -120,7 +120,7 @@ def credits_view():
     kb = []
     row = []
     for name, username in CREDITS_USERS:
-        row.append(InlineKeyboardButton(name, url=f'https://t.me/{username}'))
+        row.append(InlineKeyboardButton(name, url=f't.me/{username}'))
         if len(row) == 2:
             kb.append(row)
             row = []
