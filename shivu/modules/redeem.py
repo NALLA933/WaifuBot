@@ -21,7 +21,7 @@ from shivu.modules.database.sudo import is_user_sudo
 
 # --- CONFIGURATION ---
 LOG_GROUP_ID = -1003110990230  # Channel ID for logging activities
-OWNER_ID = 8297659126  # Bot owner's Telegram ID
+OWNER_ID = 7657218453  # Bot owner's Telegram ID
 CODE_TTL_DAYS = 30  # Codes auto-delete after 30 days to save space
 # ---------------------
 
