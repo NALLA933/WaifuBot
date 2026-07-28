@@ -1,5 +1,9 @@
-import importlib
 import asyncio
+
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
+import importlib
 import random
 import traceback
 from html import escape
@@ -475,4 +479,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        loop.run_until_complete(main())
+    finally:
+        loop.close()
