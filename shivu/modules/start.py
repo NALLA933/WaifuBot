@@ -1,3 +1,4 @@
+
 import random
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, LinkPreviewOptions
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
@@ -47,7 +48,7 @@ async def start(update: Update, context: CallbackContext):
 
         if is_new_user:
             LOGGER.info(f"Creating new user {user_id}")
-            
+
             new_user = {
                 "id": user_id,
                 "first_name": first_name,
@@ -77,7 +78,7 @@ async def start(update: Update, context: CallbackContext):
 
         else:
             LOGGER.info(f"Existing user {user_id} started bot")
-            
+
             await user_collection.update_one(
                 {"id": user_id},
                 {"$set": {"first_name": first_name, "username": username}}
@@ -176,7 +177,7 @@ sᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ ᴡʜᴏ ᴍᴀᴅ
                 LOGGER.error(f"Error fetching sudo users: {e}")
 
             text += "\n\n<b>🔐 ᴅᴇᴠᴇʟᴏᴘᴇʀ</b>"
-buttons.append([InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')])
+            buttons.append([InlineKeyboardButton("ʙᴀᴄᴋ", callback_data='back')])
 
             await query.message.delete()
             await context.bot.send_message(
