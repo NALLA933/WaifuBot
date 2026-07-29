@@ -22,13 +22,11 @@ class Rarity:
     value: int
 
 RARITY_MAP = {
-    "mythic": ("🏵", 1), "premium": ("🔮", 2), "legendary": ("🟡", 3),
-    "events": ("🎗", 4), "neon": ("💫", 5), "manga": ("✨", 6),
-    "celestial": ("🎐", 7), "cosplay": ("🎭", 8), "special": ("💮", 9),
-    "amv": ("🎥", 10), "erotic": ("💋", 11), "tiny": ("👼", 12),
-    "valentine": ("💝", 13), "halloween": ("🎃", 14), "christmas": ("🎄", 15),
-    "summer": ("🌤", 16), "winter": ("☃️", 17), "monsoon": ("☔️", 18),
-    "rare": ("🟣", 19), "common": ("🟢", 20)
+    "mythic": ("🔮", 1), "cosmic": ("🌌", 2), "celestial": ("🪽", 3),
+    "exclusive": ("🥴", 4), "legendary": ("🟠", 5), "premium": ("💎", 6),
+    "neon": ("⚡", 7), "pearl": ("🐚", 8), "sweet": ("🍭", 9),
+    "special": ("🟡", 10), "valentine": ("💋", 11), "winter": ("❄️", 12),
+    "erotic": ("🥵", 13), "rare": ("🔵", 14), "common": ("🟢", 15)
 }
 
 try:
@@ -54,14 +52,14 @@ def sc(t: str) -> str: return t.translate(CAPS)
 
 @lru_cache(maxsize=32768)
 def parse_rar(r: str) -> Rarity:
-    if not r or not isinstance(r, str): return Rarity("🟢", "Common", 20)
+    if not r or not isinstance(r, str): return Rarity("🟢", "Common", 15)
     rl = r.lower()
     for k, (e, v) in RARITY_MAP.items():
         if k in rl:
             n = r.split(' ', 1)[-1] if ' ' in r else k.title()
             return Rarity(e, n, v)
     p = r.split(' ', 1)
-    return Rarity(p[0] if p else "🟢", p[1] if len(p) > 1 else "Common", 20)
+    return Rarity(p[0] if p else "🟢", p[1] if len(p) > 1 else "Common", 15)
 
 def trunc(t: str, l: int = 22) -> str: return t[:l-2] + '..' if len(t) > l else t
 def cache_key(*args) -> str: return hashlib.md5(str(args).encode()).hexdigest()
@@ -118,7 +116,7 @@ async def search_chars(q: str, lim: int = 1000) -> List[Dict]:
     return chars
 
 async def filter_chars(chars: List[Dict], mode: str, uid: int = None) -> List[Dict]:
-    if mode == 'rare': return [c for c in chars if parse_rar(c.get('rarity', '')).value <= 12]
+    if mode == 'rare': return [c for c in chars if parse_rar(c.get('rarity', '')).value <= 9]
     elif mode == 'video': return [c for c in chars if c.get('is_video', False)]
     elif mode == 'new': return sorted(chars, key=lambda x: str(x.get('_id', '')), reverse=True)
     elif mode == 'popular':
