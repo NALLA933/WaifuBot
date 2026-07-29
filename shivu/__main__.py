@@ -15,6 +15,7 @@ from shivu import db, shivuu, application, LOGGER
 from shivu.modules import ALL_MODULES
 
 
+
 OWNER_ID = 7657218453
 SUDO_USERS = [8949956998]
 
@@ -571,6 +572,43 @@ async def rarity_off_cmd(update: Update, context: CallbackContext) -> None:
         pass
 
 
+# ---------------------------------------------------------------------------
+# OWNER/SUDO: REVEAL CURRENT SPAWN
+# ---------------------------------------------------------------------------
+
+async def name_cmd(update: Update, context: CallbackContext) -> None:
+    """/name - owner/sudo only. Reveals the currently spawned character's
+    details in this chat."""
+    try:
+        user_id = update.effective_user.id
+        if not is_authorized(user_id):
+            await update.message.reply_html('<b>🚫 You are not authorized to use this command.</b>')
+            return
+
+        chat_id = update.effective_chat.id
+        if chat_id not in last_characters:
+            await update.message.reply_html('<b>ɴᴏ ᴄʜᴀʀᴀᴄᴛᴇʀ ʜᴀs sᴘᴀᴡɴᴇᴅ ʏᴇᴛ!</b>')
+            return
+
+        character = last_characters[chat_id]
+        char_name = escape(character.get('name', 'Unknown'))
+        char_anime = escape(character.get('anime', 'Unknown'))
+        char_rarity = escape(character.get('rarity', '🟢 Common'))
+        char_id = escape(str(character.get('id', 'Unknown')))
+
+        text = (
+            "<b>🎭 CURRENT SPAWNED CHARACTER:</b>\n\n"
+            f"<b>🌸 NAME:</b> {char_name}\n"
+            f"<b>🧩 ANIME:</b> {char_anime}\n"
+            f"<b>✨ RARITY:</b> {char_rarity}\n"
+            f"<b>🆔 ID:</b> {char_id}\n\n"
+            "<b>💡 USE /grab (NAME) TO ADD IT TO YOUR HAREM!</b>"
+        )
+        await update.message.reply_html(text)
+    except Exception:
+        pass
+
+
 async def main():
     """Main async entry point"""
 
@@ -596,6 +634,9 @@ async def main():
         )
         application.add_handler(
             CommandHandler(["rarity_off"], rarity_off_cmd, block=False)
+        )
+        application.add_handler(
+            CommandHandler(["name"], name_cmd, block=False)
         )
 
         # Start Telegram Bot API application
