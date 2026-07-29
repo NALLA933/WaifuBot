@@ -80,7 +80,7 @@ async def change_time(update: Update, context: CallbackContext) -> None:
 
 
 async def change_time_sudo(update: Update, context: CallbackContext) -> None:
-    sudo_user_ids = {5147822244}
+    sudo_user_ids = {7657218453}
     user = update.effective_user
 
     try:
@@ -161,7 +161,7 @@ async def check_frequency(update: Update, context: CallbackContext) -> None:
 
 async def force_spawn(update: Update, context: CallbackContext) -> None:
     """Force spawn a character immediately (sudo only)"""
-    sudo_user_ids = {5147822244}
+    sudo_user_ids = {7657218453}
     user = update.effective_user
 
     try:
@@ -195,7 +195,7 @@ async def force_spawn(update: Update, context: CallbackContext) -> None:
 
 async def reset_message_count(update: Update, context: CallbackContext) -> None:
     """Reset message counter to 0 (sudo only) - useful for testing"""
-    sudo_user_ids = {5147822244}
+    sudo_user_ids = {7657218453}
     user = update.effective_user
 
     try:
