@@ -15,14 +15,94 @@ from shivu import db, shivuu, application, LOGGER
 from shivu.modules import ALL_MODULES
 
 
+OWNER_ID = 7657218453
+SUDO_USERS = [8949956998]
+
+
 collection = db['anime_characters_lol']
 user_collection = db['user_collection_lmaoooo']
 group_user_totals_collection = db['group_user_totalsssssss']
 top_global_groups_collection = db['top_global_groups']
+rarity_status_collection = db['rarity_status_settings']
 
 MESSAGE_FREQUENCY = 70
 DESPAWN_TIME = 180
 AMV_ALLOWED_GROUP_ID = -1003100468240
+
+# ---------------------------------------------------------------------------
+# RARITY CONFIG
+# ---------------------------------------------------------------------------
+RARITIES = {
+    "common": ("🟢", "Common"),
+    "rare": ("🔵", "Rare"),
+    "legendary": ("🟠", "Legendary"),
+    "special": ("🟡", "Special Edition"),
+    "celestial": ("🪽", "Celestial"),
+    "erotic": ("🥵", "Erotic"),
+    "exclusive": ("🥴", "Exclusive"),
+    "premium": ("💎", "Premium Edition"),
+    "mythic": ("🔮", "Mythic"),
+    "sweet": ("🍭", "Sweet"),
+    "valentine": ("💋", "Valentine"),
+    "winter": ("❄️", "Winter"),
+    "neon": ("⚡", "Neon"),
+    "pearl": ("🐚", "Pearl"),
+    "cosmic": ("🌌", "Cosmic"),
+}
+
+# In-memory cache of rarity on/off state, loaded from DB at startup.
+# Defaults to True (enabled) for any rarity not explicitly stored.
+rarity_status_cache = {}
+
+
+def get_rarity_key(rarity_str):
+    """Map a character's stored rarity string (e.g. '🪽 Celestial') back to
+    its RARITIES key (e.g. 'celestial')."""
+    if not isinstance(rarity_str, str):
+        return None
+
+    rarity_str = rarity_str.strip()
+    if ' ' in rarity_str:
+        emoji, name = rarity_str.split(' ', 1)
+    else:
+        emoji, name = rarity_str, ''
+
+    name = name.strip().lower()
+
+    for key, (r_emoji, r_name) in RARITIES.items():
+        if rarity_str == key:
+            return key
+        if emoji == r_emoji or name == r_name.lower():
+            return key
+
+    return None
+
+
+async def load_rarity_status():
+    """Load saved rarity on/off state from DB into memory. Anything not
+    saved defaults to enabled."""
+    try:
+        doc = await rarity_status_collection.find_one({'_id': 'settings'})
+        saved = doc.get('status', {}) if doc else {}
+    except Exception:
+        saved = {}
+
+    for key in RARITIES:
+        rarity_status_cache[key] = saved.get(key, True)
+
+
+async def set_rarity_status(key, enabled):
+    rarity_status_cache[key] = enabled
+    await rarity_status_collection.update_one(
+        {'_id': 'settings'},
+        {'$set': {f'status.{key}': enabled}},
+        upsert=True
+    )
+
+
+def is_authorized(user_id):
+    return user_id == OWNER_ID or user_id in SUDO_USERS
+
 
 locks = {}
 message_counts = {}
@@ -48,6 +128,11 @@ async def is_character_allowed(character, chat_id=None):
         char_rarity = character.get('rarity', '🟢 Common')
         rarity_emoji = char_rarity.split(' ')[0] if isinstance(char_rarity, str) and ' ' in char_rarity else char_rarity
         is_video = character.get('is_video', False)
+
+        # Global rarity on/off toggle
+        rarity_key = get_rarity_key(char_rarity)
+        if rarity_key is not None and not rarity_status_cache.get(rarity_key, True):
+            return False
 
         if is_video and rarity_emoji == '🎥':
             return chat_id == AMV_ALLOWED_GROUP_ID
@@ -196,10 +281,7 @@ async def send_image(update: Update, context: CallbackContext) -> None:
         if chat_id in first_correct_guesses:
             del first_correct_guesses[chat_id]
 
-        caption = """✨ ʟᴏᴏᴋ! ᴀ ᴡᴀɪꜰᴜ ʜᴀꜱ ᴀᴘᴘᴇᴀʀᴇᴅ ✨
-✦ ᴍᴀᴋᴇ ʜᴇʀ ʏᴏᴜʀꜱ — ᴛʏᴘᴇ /ɢʀᴀʙ &lt;ᴡᴀɪꜰᴜ_ɴᴀᴍᴇ&gt;
-
-⏳ ᴛɪᴍᴇ ʟɪᴍɪᴛ: 3 ᴍɪɴᴜᴛᴇꜱ!"""
+        caption = "<b>✨ A NEW CHARACTER HAS APPEARED! ✨\nUSE /grab (NAME) TO ADD IT IN YOUR HAREM.</b>"
 
         is_video = character.get('is_video', False)
         media_url = character.get('img_url')
@@ -382,17 +464,18 @@ async def guess(update: Update, context: CallbackContext) -> None:
             character_id = character.get('id', 'Unknown')
             owner_name = update.effective_user.first_name
 
-            success_message = f"""🎊 ᴄᴏɴɢʀᴀᴛᴜʟᴀᴛɪᴏɴs! ɴᴇᴡ ᴄʜᴀʀᴀᴄᴛᴇʀ ᴜɴʟᴏᴄᴋᴇᴅ 🎊
-╭════════•┈┈┈┈•════════╮
-┃ ✦ ɴᴀᴍᴇ: 𓂃ࣰࣲ {escape(character_name)}
-┃ ✦ ʀᴀʀɪᴛʏ: {escape(rarity)}
-┃ ✦ ᴀɴɪᴍᴇ: {escape(anime)}
-┃ ✦ ɪᴅ: 🆔 {escape(str(character_id))}
-┃ ✦ ꜱᴛᴀᴛᴜꜱ: ᴀᴅᴅᴇᴅ ᴛᴏ ʜᴀʀᴇᴍ ✅
-┃ ✦ ᴏᴡɴᴇʀ: ✧ {escape(owner_name)}
-╰════════•┈┈┈┈•════════╯
+            rarity_parts = rarity.split(' ', 1) if isinstance(rarity, str) and ' ' in rarity else (rarity, '')
+            rarity_emoji_disp, rarity_name_disp = rarity_parts[0], rarity_parts[1] if len(rarity_parts) > 1 else ''
 
-✧ ᴄʜᴀʀᴀᴄᴛᴇʀ ꜱᴜᴄᴄᴇꜱꜰᴜʟʟʏ ᴀᴅᴅᴇᴅ ɪɴ ʏᴏᴜʀ ʜᴀʀᴇᴍ ✅"""
+            success_message = (
+                "<b>Congratulation 🎉\n"
+                f"{escape(owner_name)} 👑 You Got New waifu 🫧\n"
+                f"🌸NAME: {escape(character_name)} [🆔]\n"
+                f"🧩ANIME: {escape(anime)}\n"
+                f"RAIRTY: {escape(rarity_emoji_disp)} {escape(rarity_name_disp)}\n"
+                f"IDID: {escape(str(character_id))}\n\n"
+                "⛩ Check your /harem Now</b>"
+            )
 
             await update.message.reply_text(
                 success_message,
@@ -422,13 +505,79 @@ async def guess(update: Update, context: CallbackContext) -> None:
         pass
 
 
+# ---------------------------------------------------------------------------
+# RARITY ON/OFF COMMANDS
+# ---------------------------------------------------------------------------
 
+async def rarity_status_cmd(update: Update, context: CallbackContext) -> None:
+    """/rarity_status - shows every rarity and whether it's currently
+    allowed to spawn globally."""
+    try:
+        lines = ["<b>🎯 Rarity Spawn Status</b>\n"]
+        for key, (emoji, name) in RARITIES.items():
+            enabled = rarity_status_cache.get(key, True)
+            state = "✅ ON" if enabled else "❌ OFF"
+            lines.append(f"{emoji} <b>{escape(name)}</b> (<code>{key}</code>) — {state}")
+
+        lines.append("\nUse /rarity_on &lt;key&gt; or /rarity_off &lt;key&gt; to change.")
+        await update.message.reply_html("\n".join(lines))
+    except Exception:
+        pass
+
+
+async def rarity_on_cmd(update: Update, context: CallbackContext) -> None:
+    try:
+        user_id = update.effective_user.id
+        if not is_authorized(user_id):
+            await update.message.reply_html('<b>🚫 You are not authorized to use this command.</b>')
+            return
+
+        if not context.args:
+            await update.message.reply_html('<b>Usage:</b> /rarity_on &lt;rarity_key&gt;')
+            return
+
+        key = context.args[0].lower()
+        if key not in RARITIES:
+            await update.message.reply_html(f'<b>❌ Unknown rarity key:</b> <code>{escape(key)}</code>')
+            return
+
+        await set_rarity_status(key, True)
+        emoji, name = RARITIES[key]
+        await update.message.reply_html(f'<b>✅ {emoji} {escape(name)} rarity is now ENABLED and can spawn.</b>')
+    except Exception:
+        pass
+
+
+async def rarity_off_cmd(update: Update, context: CallbackContext) -> None:
+    try:
+        user_id = update.effective_user.id
+        if not is_authorized(user_id):
+            await update.message.reply_html('<b>🚫 You are not authorized to use this command.</b>')
+            return
+
+        if not context.args:
+            await update.message.reply_html('<b>Usage:</b> /rarity_off &lt;rarity_key&gt;')
+            return
+
+        key = context.args[0].lower()
+        if key not in RARITIES:
+            await update.message.reply_html(f'<b>❌ Unknown rarity key:</b> <code>{escape(key)}</code>')
+            return
+
+        await set_rarity_status(key, False)
+        emoji, name = RARITIES[key]
+        await update.message.reply_html(f'<b>🚫 {emoji} {escape(name)} rarity is now DISABLED and will not spawn.</b>')
+    except Exception:
+        pass
 
 
 async def main():
     """Main async entry point"""
 
     try:
+        # Load rarity on/off state before we start accepting spawns
+        await load_rarity_status()
+
         # Start Pyrogram client
         await shivuu.start()
 
@@ -438,6 +587,15 @@ async def main():
         )
         application.add_handler(
             MessageHandler(filters.ALL, message_counter, block=False)
+        )
+        application.add_handler(
+            CommandHandler(["rarity_status"], rarity_status_cmd, block=False)
+        )
+        application.add_handler(
+            CommandHandler(["rarity_on"], rarity_on_cmd, block=False)
+        )
+        application.add_handler(
+            CommandHandler(["rarity_off"], rarity_off_cmd, block=False)
         )
 
         # Start Telegram Bot API application
