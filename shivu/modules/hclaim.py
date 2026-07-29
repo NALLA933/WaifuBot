@@ -28,12 +28,16 @@ UTC_TZ = pytz.UTC
 
 class RarityType(Enum):
     MYTHIC = ("mythic", "🏵 Mythic", 1, 10, "#FF1493")
+    COSMIC = ("cosmic", "🌌 Cosmic", 2, 10, "#191970")
     CELESTIAL = ("celestial", "🎐 Celestial", 2, 9, "#9370DB")
     LEGENDARY = ("legendary", "🟡 Legendary", 5, 8, "#FFD700")
+    EXCLUSIVE = ("exclusive", "🥴 Exclusive", 6, 8, "#C71585")
     PREMIUM = ("premium", "🔮 Premium Edition", 8, 7, "#FF69B4")
     NEON = ("neon", "💫 Neon", 10, 6, "#00FFFF")
+    PEARL = ("pearl", "🐚 Pearl", 10, 6, "#F0EAD6")
     MANGA = ("manga", "✨ Manga", 12, 5, "#FF6347")
     SPECIAL = ("special", "💮 Special Edition", 15, 5, "#FFA500")
+    SWEET = ("sweet", "🍭 Sweet", 15, 5, "#FF85C2")
     COSPLAY = ("cosplay", "🎭 Cosplay", 15, 4, "#DA70D6")
     RARE = ("rare", "🟣 Rare", 20, 3, "#8A2BE2")
     EROTIC = ("erotic", "💋 Erotic", 10, 4, "#DC143C")
@@ -524,7 +528,8 @@ class CharacterManager:
     def _select_rarity_lucky(luck_factor: float = 1.0) -> RarityType:
         high_tier = [
             RarityType.MYTHIC, RarityType.CELESTIAL, RarityType.LEGENDARY,
-            RarityType.PREMIUM, RarityType.NEON, RarityType.MANGA
+            RarityType.PREMIUM, RarityType.NEON, RarityType.MANGA,
+            RarityType.EXCLUSIVE, RarityType.COSMIC
         ]
         weights = [r.weight * luck_factor * 2.5 for r in high_tier]
         total = sum(weights)
@@ -847,5 +852,5 @@ async def send_log_async(context: CallbackContext, character: Dict, caption: str
     except TelegramError as e:
         logger.error(f"Log send failed: {e}")
 
-application.add_handler(CommandHandler(['hclaim', 'claim'], daily_claim, block=False))
+application.add_handler(CommandHandler(['sclaim', 'claim'], daily_claim, block=False))
 application.add_handler(CommandHandler('pro', reset_cooldown, block=False))
