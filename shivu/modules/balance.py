@@ -22,7 +22,7 @@ async def balance_cmd(update: Update, context: CallbackContext):
         user = await get_user(uid)
 
     balance = int(user.get('balance', 0))
-    await update.message.reply_text(f"💰 Balance: {balance}")
+    await update.message.reply_text(f"💸 ʙᴀʟᴀɴᴄᴇ: <code>{balance}</code>")
 
 
 application.add_handler(CommandHandler("bal", balance_cmd, block=False))
