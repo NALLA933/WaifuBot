@@ -467,7 +467,7 @@ async def redeem_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await msg.reply_text(
                 f"🎉 <b>Successfully Redeemed!</b>\n\n"
                 f"💰 <b>Received:</b> {formatted_amount} tokens\n"
-                f"🔗 <b>Powered by:</b> <a href='https://t.me/siyaprobot'>Siya</a>",
+                f"🔗 <b>Powered by:</b> <a href='https://t.me/AlisaWaifusBot'>AlisaWaifusBot</a>",
                 parse_mode=ParseMode.HTML,
                 disable_web_page_preview=True
             )
