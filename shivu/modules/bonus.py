@@ -84,7 +84,7 @@ class UserDB:
 
 def build_bonus_text(user: dict, first_name: str) -> str:
     return (
-        "「 <b>ALISA X CATCHER</b> 」\n\n"
+        "<b>Alisa Waifu Bot</b>\n\n"
         "🎮 <b>Bonus System (IST)</b>\n\n"
         f"👤 <b>User:</b> {first_name}\n"
         f"📅 <b>Date:</b> {now_ist().strftime('%Y-%m-%d %H:%M')} IST\n\n"
