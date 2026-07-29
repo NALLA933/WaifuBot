@@ -352,11 +352,13 @@ async def main():
         await shivuu.start()
 
         application.add_handler(CommandHandler(["grab", "g"], guess, block=False))
-        application.add_handler(MessageHandler(filters.ALL, message_counter, block=False))
-        application.add_handler(CommandHandler(["rarity_status"], rarity_status_cmd, block=False))
-        application.add_handler(CommandHandler(["rarity_on"], rarity_on_cmd, block=False))
-        application.add_handler(CommandHandler(["rarity_off"], rarity_off_cmd, block=False))
-        application.add_handler(CommandHandler(["name"], name_cmd, block=False))
+application.add_handler(CommandHandler(["rarity_status"], rarity_status_cmd, block=False))
+application.add_handler(CommandHandler(["rarity_on"], rarity_on_cmd, block=False))
+application.add_handler(CommandHandler(["rarity_off"], rarity_off_cmd, block=False))
+application.add_handler(CommandHandler(["name"], name_cmd, block=False))
+
+# separate group so it never blocks the commands above
+application.add_handler(MessageHandler(filters.ALL, message_counter, block=False), group=1)
 
         await application.initialize()
         await application.start()
