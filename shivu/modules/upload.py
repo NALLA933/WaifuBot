@@ -44,26 +44,21 @@ class MediaType(Enum):
 
 
 class RarityLevel(Enum):
-    COMMON = (1, "🟢 Common")
-    RARE = (2, "🟣 Rare")
-    LEGENDARY = (3, "🟡 Legendary")
-    SPECIAL_EDITION = (4, "💮 Special Edition")
-    NEON = (5, "💫 Neon")
-    MANGA = (6, "✨ Manga")
-    COSPLAY = (7, "🎭 Cosplay")
-    CELESTIAL = (8, "🎐 Celestial")
-    PREMIUM = (9, "🔮 Premium Edition")
-    EROTIC = (10, "💋 Erotic")
-    SUMMER = (11, "🌤 Summer")
-    WINTER = (12, "☃️ Winter")
-    MONSOON = (13, "☔️ Monsoon")
-    VALENTINE = (14, "💝 Valentine")
-    HALLOWEEN = (15, "🎃 Halloween")
-    CHRISTMAS = (16, "🎄 Christmas")
-    MYTHIC = (17, "🏵 Mythic")
-    SPECIAL_EVENTS = (18, "🎗 Special Events")
-    AMV = (19, "🎥 AMV")
-    TINY = (20, "👼 Tiny")
+    MYTHIC = (1, "🔮 Mythic")
+    COSMIC = (2, "🌌 Cosmic")
+    CELESTIAL = (3, "🪽 Celestial")
+    EXCLUSIVE = (4, "🥴 Exclusive")
+    LEGENDARY = (5, "🟠 Legendary")
+    PREMIUM = (6, "💎 Premium Edition")
+    NEON = (7, "⚡ Neon")
+    PEARL = (8, "🐚 Pearl")
+    SWEET = (9, "🍭 Sweet")
+    SPECIAL_EDITION = (10, "🟡 Special Edition")
+    VALENTINE = (11, "💋 Valentine")
+    WINTER = (12, "❄️ Winter")
+    EROTIC = (13, "🥵 Erotic")
+    RARE = (14, "🔵 Rare")
+    COMMON = (15, "🟢 Common")
 
     def __init__(self, level: int, display: str):
         self._level = level
@@ -79,7 +74,11 @@ class RarityLevel(Enum):
 
     @property
     def emoji(self) -> str:
-        return self._display.split()[0]
+        return self._display.split(' ', 1)[0]
+
+    @property
+    def name_only(self) -> str:
+        return self._display.split(' ', 1)[1]
 
     @classmethod
     @lru_cache(maxsize=32)
@@ -215,7 +214,7 @@ class Character:
         return (
             f'<b>{self.character_id}:</b> {self.name}\n'
             f'<b>{self.anime}</b>\n'
-            f'<b>{self.rarity.emoji} 𝙍𝘼𝙍𝙄𝙏𝙔:</b> {self.rarity.display_name[2:]}\n'
+            f'<b>{self.rarity.emoji} 𝙍𝘼𝙍𝙄𝙏𝙔:</b> {self.rarity.name_only}\n'
             f'<b>Type:</b> {media_type}\n\n'
             f'{action} 𝑩𝒚 ➥ <a href="tg://user?id={self.uploader_id}">{self.uploader_name}</a>'
         )
@@ -772,7 +771,7 @@ class CharacterUploadHandler:
         )
         
         if not character:
-            await processing_msg.edit_text('❌ Invalid rarity number (1-20).')
+            await processing_msg.edit_text('❌ Invalid rarity number (1-15).')
             return
         
         result = await TelegramUploader.upload_character(character, context)
@@ -889,7 +888,7 @@ class CharacterUploadHandler:
         )
         
         if not character:
-            await processing_msg.edit_text('❌ Invalid rarity number (1-20).')
+            await processing_msg.edit_text('❌ Invalid rarity number (1-15).')
             return
         
         result = await TelegramUploader.upload_character(character, context)
@@ -1033,7 +1032,7 @@ class CharacterUpdateHandler:
                 rarity_num = int(new_value)
                 rarity = RarityLevel.from_number(rarity_num)
                 if not rarity:
-                    await processing_msg.edit_text('❌ Invalid rarity (1-20).')
+                    await processing_msg.edit_text('❌ Invalid rarity (1-15).')
                     return None
                 return {field: rarity.display_name}
             except ValueError:
@@ -1110,12 +1109,12 @@ class CharacterUpdateHandler:
         }.get(media_type, '🖼 Image')
         
         rarity_text = character_data['rarity']
-        emoji = rarity_text.split()[0]
+        emoji, name_only = rarity_text.split(' ', 1)
         
         caption = (
             f'<b>{character_data["id"]}:</b> {character_data["name"]}\n'
             f'<b>{character_data["anime"]}</b>\n'
-            f'<b>{emoji} 𝙍𝘼𝙍𝙄𝙏𝙔:</b> {rarity_text[2:]}\n'
+            f'<b>{emoji} 𝙍𝘼𝙍𝙄𝙏𝙔:</b> {name_only}\n'
             f'<b>Type:</b> {media_type_display}\n\n'
             f'𝑼𝒑𝒅𝒂𝒕𝒆𝒅 𝑩𝒚 ➥ <a href="tg://user?id={user.id}">{user.first_name}</a>'
         )
