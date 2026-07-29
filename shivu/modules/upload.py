@@ -1,11 +1,13 @@
 """ v3 using siya method """
 
 import io
+import os
 import asyncio
 import hashlib
+import logging
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-from typing import Optional, Tuple, Dict, List, Union, Any
+from typing import Optional, Tuple, Dict, List, Union, Any, Callable
 from pathlib import Path
 from functools import wraps, lru_cache
 from contextlib import asynccontextmanager
@@ -13,6 +15,7 @@ import mimetypes
 
 import aiohttp
 from aiohttp import ClientSession, TCPConnector
+from tenacity import retry, stop_after_attempt, wait_exponential
 from pymongo import ReturnDocument
 from telegram import Update, InputFile, Message
 from telegram.ext import CommandHandler, ContextTypes
@@ -20,6 +23,8 @@ from telegram.error import TelegramError, NetworkError, TimedOut
 from motor.motor_asyncio import AsyncIOMotorCollection
 
 from shivu import application, collection, db, CHARA_CHANNEL_ID, SUPPORT_CHAT, sudo_users
+
+logger = logging.getLogger(__name__)
 
 
 class MediaType(Enum):
@@ -98,7 +103,6 @@ class Config:
     MAX_RETRIES: int = 3
     RETRY_DELAY: float = 1.0
     CONNECTION_LIMIT: int = 100
-    CATBOX_API: str = "https://catbox.moe/user/api.php"
     ALLOWED_EXTENSIONS: tuple = ('.jpg', '.jpeg', '.png', '.gif', '.mp4', '.avi', '.mov', '.mkv', '.webm')
 
 
@@ -383,39 +387,77 @@ class FileDownloader:
                 return b"".join(chunks) if chunks else None
 
 
-class CatboxUploader:
-    @staticmethod
-    @retry_on_failure(max_attempts=Config.MAX_RETRIES, delay=Config.RETRY_DELAY)
-    async def upload(file_bytes: bytes, filename: str) -> Optional[str]:
-        async with SessionManager.get_session() as session:
-            data = aiohttp.FormData()
-            data.add_field('reqtype', 'fileupload')
-            data.add_field(
-                'fileToUpload',
-                file_bytes,
-                filename=filename,
-                content_type='application/octet-stream'
-            )
-            
-            async with session.post(Config.CATBOX_API, data=data) as response:
-                if response.status == 200:
-                    result = (await response.text()).strip()
-                    if result.startswith('http'):
-                        return result
-                return None
+class ImageUploader:
+    """Uploads images/media using ImgBB (with room to add more fallback hosts)."""
 
-    @staticmethod
-    async def upload_with_progress(file_bytes: bytes, filename: str, callback=None) -> Optional[str]:
+    def __init__(self):
+        # Prefer an environment variable if set; falls back to the provided key.
+        self.imgbb_key = os.environ.get('IMGBB_API_KEY', '2fd4cae3b75cca98e3964f79aa3c7274')
+        self.services: List[Tuple[str, Callable[[bytes], object]]] = []
+        if self.imgbb_key:
+            self.services.append(("ImgBB", self._upload_to_imgbb))
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    async def _upload_to_imgbb(self, image_data: bytes) -> Optional[str]:
+        """Upload to ImgBB with retry"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                data = aiohttp.FormData()
+                data.add_field('image', io.BytesIO(image_data))
+                data.add_field('key', self.imgbb_key)
+
+                async with session.post(
+                    "https://api.imgbb.com/1/upload",
+                    data=data,
+                    timeout=aiohttp.ClientTimeout(total=30)
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        if result.get('success'):
+                            image_url = (
+                                result.get('data', {}).get('display_url')
+                                or result.get('data', {}).get('url')
+                            )
+                            if image_url:
+                                logger.debug("ImgBB upload successful")
+                                return image_url
+                    elif response.status == 429:
+                        logger.warning("ImgBB rate limited, will retry...")
+                        raise Exception("Rate limited")
+                    else:
+                        logger.warning("ImgBB upload returned status %s", response.status)
+        except Exception as e:
+            logger.warning(f"ImgBB attempt failed: {e}")
+            raise
+        return None
+
+    async def upload(self, file_bytes: bytes, filename: str = "") -> Optional[str]:
+        """Try each configured service in order until one succeeds."""
+        for service_name, upload_func in self.services:
+            try:
+                url = await upload_func(file_bytes)
+                if url:
+                    return url
+            except Exception as e:
+                logger.warning(f"{service_name} upload failed after retries: {e}")
+                continue
+        return None
+
+    async def upload_with_progress(self, file_bytes: bytes, filename: str = "", callback=None) -> Optional[str]:
         total_size = len(file_bytes)
         if callback:
             await callback(0, total_size)
-        
-        result = await CatboxUploader.upload(file_bytes, filename)
-        
+
+        result = await self.upload(file_bytes, filename)
+
         if callback:
             await callback(total_size, total_size)
-        
+
         return result
+
+
+# Shared instance used across the upload/update handlers
+image_uploader = ImageUploader()
 
 
 class TelegramUploader:
@@ -748,20 +790,20 @@ class CharacterUploadHandler:
             return
         
         progress = ProgressTracker(processing_msg)
-        await processing_msg.edit_text('⏳ Uploading to Catbox...')
+        await processing_msg.edit_text('⏳ Uploading image...')
         
-        catbox_url = await CatboxUploader.upload_with_progress(
+        image_url = await image_uploader.upload_with_progress(
             media_file.file_bytes,
             media_file.filename,
             progress.update
         )
         
-        if not catbox_url:
-            await processing_msg.edit_text('❌ Catbox upload failed. Please retry.')
+        if not image_url:
+            await processing_msg.edit_text('❌ Image upload failed. Please retry.')
             return
         
-        object.__setattr__(media_file, 'url', catbox_url)
-        await processing_msg.edit_text('✅ Catbox uploaded!\n⏳ Creating character...')
+        object.__setattr__(media_file, 'url', image_url)
+        await processing_msg.edit_text('✅ Image uploaded!\n⏳ Creating character...')
         
         character = await CharacterFactory.create_from_args(
             context.args,
@@ -865,19 +907,19 @@ class CharacterUploadHandler:
             )
             return
         
-        await processing_msg.edit_text('⏳ Uploading to Catbox...')
+        await processing_msg.edit_text('⏳ Uploading image...')
         
-        catbox_url = await CatboxUploader.upload_with_progress(
+        image_url = await image_uploader.upload_with_progress(
             file_bytes,
             media_file.filename,
             progress.update
         )
         
-        if not catbox_url:
-            await processing_msg.edit_text('❌ Catbox upload failed.')
+        if not image_url:
+            await processing_msg.edit_text('❌ Image upload failed.')
             return
         
-        object.__setattr__(media_file, 'url', catbox_url)
+        object.__setattr__(media_file, 'url', image_url)
         await processing_msg.edit_text('✅ Uploaded!\n⏳ Saving character...')
         
         character = await CharacterFactory.create_from_args(
@@ -1062,22 +1104,22 @@ class CharacterUpdateHandler:
                 await processing_msg.edit_text('❌ File size exceeds limit.')
                 return None
             
-            await processing_msg.edit_text('⏳ Uploading to Catbox...')
+            await processing_msg.edit_text('⏳ Uploading image...')
             
-            catbox_url = await CatboxUploader.upload_with_progress(
+            image_url = await image_uploader.upload_with_progress(
                 file_bytes,
                 media_file.filename,
                 progress.update
             )
             
-            if not catbox_url:
-                await processing_msg.edit_text('❌ Catbox upload failed.')
+            if not image_url:
+                await processing_msg.edit_text('❌ Image upload failed.')
                 return None
             
-            await processing_msg.edit_text('✅ Re-uploaded to Catbox!')
+            await processing_msg.edit_text('✅ Re-uploaded!')
             
             return {
-                'img_url': catbox_url,
+                'img_url': image_url,
                 'is_video': media_file.is_video,
                 'media_type': media_file.media_type.value,
                 'file_hash': media_file.hash
