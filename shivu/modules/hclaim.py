@@ -27,29 +27,20 @@ KOLKATA_TZ = pytz.timezone('Asia/Kolkata')
 UTC_TZ = pytz.UTC
 
 class RarityType(Enum):
-    MYTHIC = ("mythic", "🏵 Mythic", 1, 10, "#FF1493")
-    COSMIC = ("cosmic", "🌌 Cosmic", 2, 10, "#191970")
-    CELESTIAL = ("celestial", "🎐 Celestial", 2, 9, "#9370DB")
-    LEGENDARY = ("legendary", "🟡 Legendary", 5, 8, "#FFD700")
-    EXCLUSIVE = ("exclusive", "🥴 Exclusive", 6, 8, "#C71585")
-    PREMIUM = ("premium", "🔮 Premium Edition", 8, 7, "#FF69B4")
-    NEON = ("neon", "💫 Neon", 10, 6, "#00FFFF")
+    MYTHIC = ("mythic", "🔮 Mythic", 1, 12, "#8A2BE2")
+    COSMIC = ("cosmic", "🌌 Cosmic", 2, 11, "#191970")
+    CELESTIAL = ("celestial", "🪽 Celestial", 3, 10, "#9370DB")
+    EXCLUSIVE = ("exclusive", "🥴 Exclusive", 4, 9, "#C71585")
+    LEGENDARY = ("legendary", "🟠 Legendary", 5, 8, "#FFA500")
+    PREMIUM = ("premium", "💎 Premium Edition", 6, 7, "#00CED1")
+    NEON = ("neon", "⚡ Neon", 8, 6, "#00FFFF")
     PEARL = ("pearl", "🐚 Pearl", 10, 6, "#F0EAD6")
-    MANGA = ("manga", "✨ Manga", 12, 5, "#FF6347")
-    SPECIAL = ("special", "💮 Special Edition", 15, 5, "#FFA500")
-    SWEET = ("sweet", "🍭 Sweet", 15, 5, "#FF85C2")
-    COSPLAY = ("cosplay", "🎭 Cosplay", 15, 4, "#DA70D6")
-    RARE = ("rare", "🟣 Rare", 20, 3, "#8A2BE2")
-    EROTIC = ("erotic", "💋 Erotic", 10, 4, "#DC143C")
-    VALENTINE = ("valentine", "💝 Valentine", 8, 5, "#FF1493")
-    HALLOWEEN = ("halloween", "🎃 Halloween", 8, 5, "#FF8C00")
-    CHRISTMAS = ("christmas", "🎄 Christmas", 8, 5, "#228B22")
-    SUMMER = ("summer", "🌤 Summer", 10, 3, "#FFD700")
-    WINTER = ("winter", "☃️ Winter", 10, 3, "#87CEEB")
-    MONSOON = ("monsoon", "☔️ Monsoon", 10, 3, "#4682B4")
-    EVENTS = ("events", "🎗 Special Events", 12, 4, "#FF4500")
-    AMV = ("amv", "🎥 AMV", 15, 3, "#4B0082")
-    TINY = ("tiny", "👼 Tiny", 20, 2, "#FFB6C1")
+    SWEET = ("sweet", "🍭 Sweet", 12, 5, "#FF85C2")
+    SPECIAL = ("special", "🟡 Special Edition", 14, 5, "#FFD700")
+    VALENTINE = ("valentine", "💋 Valentine", 10, 5, "#FF1493")
+    WINTER = ("winter", "❄️ Winter", 10, 4, "#87CEEB")
+    EROTIC = ("erotic", "🥵 Erotic", 12, 4, "#DC143C")
+    RARE = ("rare", "🔵 Rare", 20, 3, "#1E90FF")
     COMMON = ("common", "🟢 Common", 50, 1, "#32CD32")
     DEFAULT = ("default", None, 0, 0, "#808080")
     
@@ -199,11 +190,7 @@ class TimeFormatter:
         month = now.month
         seasonal_map = {
             2: RarityType.VALENTINE,
-            10: RarityType.HALLOWEEN,
-            12: RarityType.CHRISTMAS,
-            (6, 7, 8): RarityType.SUMMER,
-            (12, 1, 2): RarityType.WINTER,
-            (7, 8, 9): RarityType.MONSOON
+            (12, 1, 2): RarityType.WINTER
         }
         
         for key, rarity in seasonal_map.items():
@@ -528,8 +515,8 @@ class CharacterManager:
     def _select_rarity_lucky(luck_factor: float = 1.0) -> RarityType:
         high_tier = [
             RarityType.MYTHIC, RarityType.CELESTIAL, RarityType.LEGENDARY,
-            RarityType.PREMIUM, RarityType.NEON, RarityType.MANGA,
-            RarityType.EXCLUSIVE, RarityType.COSMIC
+            RarityType.PREMIUM, RarityType.NEON, RarityType.EXCLUSIVE,
+            RarityType.COSMIC, RarityType.PEARL
         ]
         weights = [r.weight * luck_factor * 2.5 for r in high_tier]
         total = sum(weights)
