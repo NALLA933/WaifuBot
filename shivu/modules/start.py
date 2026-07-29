@@ -2,7 +2,7 @@ import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest, Forbidden
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
-from shivu import application, SUPPORT_CHAT, BOT_USERNAME, LOGGER, user_collection
+from shivu import application, SUPPORT_CHAT, SUPPORT_CHANNEL, BOT_USERNAME, LOGGER, user_collection
 
 START_VIDEO = "https://graph.org/file/e668451eba24048fe880c-8cefbbe834e0f673d8.mp4"
 
@@ -15,7 +15,7 @@ MAIN_CAPTION = (
 MAIN_KEYBOARD = [
     [
         InlineKeyboardButton("sᴜᴘᴘᴏʀᴛ", url=f'https://t.me/{SUPPORT_CHAT}'),
-        InlineKeyboardButton("ᴜᴘᴅᴀᴛᴇs", url='https://t.me/PICK_X_UPDATE')
+        InlineKeyboardButton("ᴜᴘᴅᴀᴛᴇs", url=f'https://t.me/{SUPPORT_CHANNEL}')
     ],
     [InlineKeyboardButton("sᴛᴀʀᴛ ɢᴜᴇssɪɴɢ💫", url=f'https://t.me/{BOT_USERNAME}?startgroup=new')],
     [
