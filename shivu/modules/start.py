@@ -4,7 +4,7 @@ from telegram.error import BadRequest, Forbidden
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 from shivu import application, SUPPORT_CHAT, BOT_USERNAME, LOGGER, user_collection
 
-START_VIDEO = "https://graph.org/file/fe64e239291abea3641fc-d6e78366c4d534a7c3.mp4"
+START_VIDEO = "https://files.catbox.moe/na51oh.mp4"
 
 FORCE_SUB_CHAT = "anime_group_hai"
 
