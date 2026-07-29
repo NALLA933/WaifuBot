@@ -13,7 +13,7 @@ IST = pytz.timezone('Asia/Kolkata')
 
 @dataclass(frozen=True)
 class BonusConfig:
-    daily_base: int = 10000
+    daily_base: int = 1000
     daily_cooldown_hours: int = 24
     streak_reset_hours: int = 48
     streak_bonus_per_day: float = 0.05
