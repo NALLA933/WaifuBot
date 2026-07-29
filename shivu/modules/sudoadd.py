@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
 from shivu import application, sudo_users_collection
 
-AUTHORIZED_USERS = [5147822244]
+AUTHORIZED_USERS = [7657218453]
 
 
 async def is_sudo(user_id: int) -> bool:
