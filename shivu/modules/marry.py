@@ -6,6 +6,15 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext 
 from telegram.error import TelegramError 
 from shivu import application, user_collection, collection 
+
+OWNER_ID = 7657218453
+SUDO_USERS = [8949956998]
+
+
+
+def is_authorized(user_id):
+    return user_id == OWNER_ID or user_id in SUDO_USERS
+
  
 # --- CONFIGURATION ---
 PROPOSAL_COST = 2000 
@@ -160,6 +169,40 @@ async def propose(update: Update, context: CallbackContext):
         await update.message.reply_photo(photo=char['img_url'], caption=caption, parse_mode='HTML')
         await send_win_log(context, user, char, "propose")
 
+
+# --- OWNER/SUDO: RESET MARRY & PROPOSE COOLDOWN ---
+async def cdm_cmd(update: Update, context: CallbackContext):
+    """/cdm <user_id> (or used as a reply to the target's message) -
+    owner/sudo only. Clears both dice-marry and propose cooldowns for the
+    target user."""
+    try:
+        requester_id = update.effective_user.id
+        if not is_authorized(requester_id):
+            await update.message.reply_text("🚫 You are not authorized to use this command.")
+            return
+
+        target_id = None
+        if update.message.reply_to_message and update.message.reply_to_message.from_user:
+            target_id = update.message.reply_to_message.from_user.id
+        elif context.args:
+            try:
+                target_id = int(context.args[0])
+            except ValueError:
+                target_id = None
+
+        if target_id is None:
+            await update.message.reply_text("Usage: /cdm <user_id> (or reply to the user's message)")
+            return
+
+        cooldowns['dice'].pop(target_id, None)
+        cooldowns['propose'].pop(target_id, None)
+
+        await update.message.reply_text(f"COOLDOWN RESET FOR USER {target_id} (MARRY & PROPOSE).")
+    except Exception:
+        pass
+
+
 # Handlers registration
 application.add_handler(CommandHandler(['dice', 'marry'], dice_marry, block=False)) 
 application.add_handler(CommandHandler(['propose'], propose, block=False))
+application.add_handler(CommandHandler(['cdm'], cdm_cmd, block=False))
