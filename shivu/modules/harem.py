@@ -219,7 +219,7 @@ class HaremHandler:
 
     def _build_keyboard(self, page: int, total_pages: int, total_chars: int, user_id: int) -> InlineKeyboardMarkup:
         keyboard = [[InlineKeyboardButton(
-            f"✨ slaves ({total_chars})", switch_inline_query_current_chat=f"collection.{user_id}"
+            f"✨ ʜᴀʀᴇᴍ ({total_chars})", switch_inline_query_current_chat=f"collection.{user_id}"
         )]]
 
         nav = []
