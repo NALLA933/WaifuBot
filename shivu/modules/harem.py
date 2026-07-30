@@ -9,7 +9,6 @@ from typing import Optional, List, Dict, Any
 import random
 import math
 from shivu import db, application, LOGGER
-from shivu.modules.hstyle import get_user_style_template, get_user_display_options
 
 RARITIES = {
     "common": ("🟢", "Common"),
@@ -74,6 +73,16 @@ class DisplayOptions:
     show_rarity_full: bool = False
     compact_mode: bool = False
     show_id_bottom: bool = False
+
+
+DEFAULT_STYLE = {
+    'header': "<b>✨ {user_name}'s Harem</b> — Page {page}/{total_pages}\n\n",
+    'anime_header': "<b>📺 {anime}</b> ({user_count}/{total_count})\n",
+    'separator': "┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈\n",
+    'character': "{rarity} {id} • {name} x{count}{fav}\n",
+    'footer': "\n",
+}
+DEFAULT_OPTIONS = DisplayOptions()
 
 
 @dataclass
@@ -266,9 +275,7 @@ class HaremHandler:
         start = page * self.CHARACTERS_PER_PAGE
         current = display_order[start:start + self.CHARACTERS_PER_PAGE]
 
-        style = await get_user_style_template(user_id)
-        opts_dict = await get_user_display_options(user_id)
-        options = DisplayOptions(**opts_dict) if opts_dict else DisplayOptions()
+        style, options = DEFAULT_STYLE, DEFAULT_OPTIONS
 
         anime_counts = await self.get_anime_counts(list({c.anime for c in current}))
         builder = HaremMessageBuilder(collection, page, total_pages, style, options, update.effective_user.first_name)
@@ -391,9 +398,6 @@ class UnfavHandler:
             InlineKeyboardButton("✅ ʏᴇs", callback_data=f"harem_unfav_yes:{user_id}"),
             InlineKeyboardButton("❌ ɴᴏ", callback_data=f"harem_unfav_no:{user_id}")
         ]]
-        opts_dict = await get_user_display_options(user_id)
-        options = DisplayOptions(**opts_dict) if opts_dict else DisplayOptions()
-
         caption = (
             f"<b>💔 ᴅᴏ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ғᴀᴠᴏʀɪᴛᴇ?</b>\n\n"
             f"✨ <b>ɴᴀᴍᴇ:</b> <code>{escape(fav.name)}</code>\n"
@@ -401,7 +405,7 @@ class UnfavHandler:
             f"🆔 <b>ɪᴅ:</b> <code>{fav.id}</code>"
         )
         await MediaHelper.send_media_message(
-            update.message, fav.img_url, caption, InlineKeyboardMarkup(buttons), fav.is_video, options
+            update.message, fav.img_url, caption, InlineKeyboardMarkup(buttons), fav.is_video, DEFAULT_OPTIONS
         )
 
     async def handle_unfav_callback(self, update: Update):
