@@ -104,16 +104,13 @@ async def credits_view(context: CallbackContext):
         clean_username = username.lstrip('@')
         try:
             chat = await context.bot.get_chat(username)
-            # tg://user?id= opens the profile card directly in-app
             url = f'tg://user?id={chat.id}'
         except (BadRequest, Forbidden) as e:
             LOGGER.error(f"Could not resolve {username}: {e}")
-            # fallback: t.me link also opens profile view, not a DM compose box
-            url = f'https://t.me/{clean_username}'
-        kb.append([InlineKeyboardButton(f"{name} (@{clean_username})", url=url)])
+            url = f'https://t.me/{clean_username}'  # fallback only if resolution fails
+        kb.append([InlineKeyboardButton(f"@{clean_username}", url=url)])
     kb.append([InlineKeyboardButton("BACK", callback_data='sxc_back')])
     return "𝗦𝘂𝗱𝗼:", InlineKeyboardMarkup(kb)
-
 def _new_user_doc(user_id, first_name, username):
     return {
         "id": user_id, "first_name": first_name, "username": username,
