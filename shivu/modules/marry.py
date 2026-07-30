@@ -24,8 +24,8 @@ UPDATE_CHANNEL = "@Anime_Group_hai"
 UPDATE_CHANNEL_URL = "https://t.me/Anime_Group_hai"  # must be SAME channel as above
 LOG_GROUP_ID = -1003139865857
 
-PROPOSE_IMAGES = ["https://files.catbox.moe/umb328.jpg", "https://files.catbox.moe/vaz41p.jpg"]
-REJECT_IMAGES = ["https://files.catbox.moe/58ye4i.jpg", "https://files.catbox.moe/3m3um2.jpg"]
+PROPOSE_IMAGES = ["https://files.catbox.moe/nvx2um.jpg", "https://files.catbox.moe/vaz41p.jpg", "https://files.catbox.moe/a0ybe8.jpg", "https://files.catbox.moe/5z3vgb.jpg"]
+REJECT_IMAGES = ["https://files.catbox.moe/b9l3ot.jpg", "https://files.catbox.moe/yjygaj.jpg", "https://files.catbox.moe/8ezqu8.jpg"]
 
 DICE_RARITIES = [rarity_display(k) for k in ("common", "rare", "legendary")]
 PROPOSE_RARITIES = [rarity_display(k) for k in ("celestial", "exclusive")]
@@ -110,7 +110,7 @@ async def dice_marry(update: Update, context: CallbackContext):
     await asyncio.sleep(3.5)
 
     if val not in (1, 6):
-        return await update.message.reply_text(f"🎲 ᴅɪᴄᴇ: <b>{val}</b>\n💔 sʜᴇ ʀᴇᴊᴇᴄᴛᴇᴅ ʏᴏᴜ!", parse_mode="HTML")
+        return await update.message.reply_text(f"🎲 ᴅɪᴄᴇ: <b>{val}</b>\nʏᴏᴜʀ ᴍᴀʀʀɪᴀɢᴇ ᴘʀᴏᴘᴏꜱᴀʟ ᴡᴀꜱ ʀᴇᴊᴇᴄᴛᴇᴅ ᴀɴᴅ ꜱʜᴇ ʀᴀɴ ᴀᴡᴀʏ!", parse_mode="HTML")
 
     char = await get_unique_char(user.id, DICE_RARITIES)
     if not char:
@@ -147,7 +147,7 @@ async def propose(update: Update, context: CallbackContext):
     await user_collection.update_one({"id": user.id}, {"$inc": {"balance": -PROPOSAL_COST}})
 
     msg = await update.message.reply_photo(
-        random.choice(PROPOSE_IMAGES), caption="<b>💍 ᴘʀᴏᴘᴏsɪɴɢ... ᴡɪʟʟ sʜᴇ ᴀᴄᴄᴇᴘᴛ?</b>", parse_mode="HTML"
+        random.choice(PROPOSE_IMAGES), caption="<b>✨ ꜰɪɴᴀʟʟʏ ᴛʜᴇ ᴛɪᴍᴇ ʜᴀꜱ ᴄᴏᴍᴇ ✨</b>", parse_mode="HTML"
     )
     await asyncio.sleep(3)
 
@@ -155,7 +155,7 @@ async def propose(update: Update, context: CallbackContext):
         await msg.delete()
         return await update.message.reply_photo(
             random.choice(REJECT_IMAGES),
-            caption=f"<b>💔 sʜᴇ ʀᴇᴊᴇᴄᴛᴇᴅ ʏᴏᴜ, <a href='tg://user?id={user.id}'>{user.first_name}</a>!</b>",
+            caption=f"<b>ʏᴏᴜ'ᴠᴇ ʙᴇᴇɴ ꜰʀɪᴇɴᴅ-ᴢᴏɴᴇᴅ ꜱᴏ ʜᴀʀᴅ, ʏᴏᴜ'ʀᴇ ɴᴏᴡ ᴛʜᴇ ᴍᴀʏᴏʀ ᴏꜰ ꜰʀɪᴇɴᴅ ᴢᴏɴᴇ ᴄɪᴛʏ! 🏙️!</b>",
             parse_mode="HTML",
         )
 
