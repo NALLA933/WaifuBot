@@ -103,7 +103,7 @@ async def credits_view(context: CallbackContext):
     for name, username in CREDITS_USERS:
         try:
             user_id = (await context.bot.get_chat(username)).id
-            url = f'tg://user?id={user_id}'  # opens profile card, not DM
+            url = f'@iMSASUKESi'  # opens profile card, not DM
         except (BadRequest, Forbidden) as e:
             LOGGER.error(f"Could not resolve {username}: {e}")
             url = f'https://t.me/{username.lstrip("@")}'
