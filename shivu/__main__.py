@@ -277,7 +277,7 @@ async def guess(update: Update, context: CallbackContext) -> None:
         success_message = (
             "<b>Congratulation 🎉\n"
             f"{escape(eu.first_name)} 👑 You Got New waifu 🫧\n"
-            f"🌸NAME: {escape(character.get('name', 'Unknown'))} [🆔]\n"
+            f"🌸NAME: {escape(character.get('name', 'Unknown'))} {escape(r_emoji)}\n"
             f"🧩ANIME: {escape(character.get('anime', 'Unknown'))}\n"
             f"RAIRTY: {escape(r_emoji)} {escape(r_name)}\n"
             f"IDID: {escape(str(character.get('id', 'Unknown')))}\n\n"
