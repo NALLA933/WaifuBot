@@ -48,7 +48,7 @@ async def generate_unique_code(attempts: int = 10) -> str:
         if not await codes_collection.find_one({'code': code}):
             return code
     p1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-    return f"SIYA-{p1}-{int(time.time()) % 10000:04d}"
+    return f"alisa-{p1}-{int(time.time()) % 10000:04d}"
 
 
 async def send_log(context: ContextTypes.DEFAULT_TYPE, text: str) -> None:
