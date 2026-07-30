@@ -18,7 +18,7 @@ VIDEOS = [
 ]
 
 def sc(t): return t.translate(str.maketrans("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢABCDEFGHIJKLMNOPQRSTUVWXYZ"))
-def badge(r): return "★1ꜱᴛ★" if r==1 else "★2ɴᴅ★" if r==2 else "★3ʀᴅ★" if r==3 else f"ᴛᴏᴘ{r}" if r<=10 else f"#{r}"
+def badge(r): return "1sᴛ" if r==1 else "2ɴᴅ" if r==2 else "3ʀᴅ" if r==3 else f"ᴛᴏᴘ{r}" if r<=10 else f"#{r}"
 def bar(c, m, l=10): f=int((c/m)*l) if m>0 else 0; return "▰"*f+"▱"*(l-f)
 def get_video(): return random.choice(VIDEOS)
 
@@ -69,13 +69,18 @@ async def ctop(update: Update, context: CallbackContext, edit=False, cid=None):
         task.cancel()
         if not data: return await msg.edit_text(sc("no data."))
 
+        uids = [u.get('user_id', u.get('_id')) for u in data]
+        bal_docs = await user_collection.find({'id': {'$in': uids}}, {'id': 1, 'balance': 1}).to_list(len(uids))
+        bal_map = {b['id']: b.get('balance', 0) for b in bal_docs}
+
         tot = sum(u['character_count'] for u in data)
         vid = get_video()
         cap = f"<a href='{vid}'>&#8205;</a><b>⸻{sc('chat top')}⸻</b>\n{sc(title)}\n\n"
         for i, u in enumerate(data, 1):
             uid = u.get('user_id', u.get('_id')); n = escape(u.get('first_name', 'Unknown'))[:15]; c = u.get("character_count", 0)
-            pct = (c/tot*100) if tot>0 else 0; m = f"<a href='tg://user?id={uid}'>{sc(n)}</a>"
-            cap += f"<b>{badge(i)}</b> {m}\n{bar(c, data[0]['character_count'], 10)} {c:,} ({pct:.1f}%)\n"
+            pct = (c/tot*100) if tot>0 else 0; bal = bal_map.get(uid, 0)
+            m = f"<a href='tg://user?id={uid}'>{sc(n)}</a>"
+            cap += f"<b>{badge(i)}</b> {m}\n{bar(c, data[0]['character_count'], 10)} {c:,} ᴄʜᴀʀꜱ ({pct:.1f}%) | 💰{bal:,}\n"
         cap += f"\n<i>{sc('total')}: {tot:,}</i>"
 
         btns = InlineKeyboardMarkup([[InlineKeyboardButton("🔄", callback_data=f"lb_ct_{cid}"), InlineKeyboardButton("📊", callback_data=f"lb_cs_{cid}")], [InlineKeyboardButton("❌", callback_data="lb_close")]])
@@ -91,7 +96,7 @@ async def leaderboard(update: Update, context: CallbackContext, edit=False, lim=
     try:
         data = await user_collection.aggregate([
             {"$match": {"characters": {"$exists": True, "$type": "array"}}},
-            {"$project": {"user_id": "$id", "first_name": 1, "character_count": {"$size": "$characters"}}},
+            {"$project": {"user_id": "$id", "first_name": 1, "character_count": {"$size": "$characters"}, "balance": 1}},
             {"$sort": {"character_count": -1}}, {"$limit": lim}
         ]).to_list(lim)
         task.cancel()
@@ -100,9 +105,10 @@ async def leaderboard(update: Update, context: CallbackContext, edit=False, lim=
         vid = get_video()
         cap = f"<a href='{vid}'>&#8205;</a><b>⸻{sc('hall of fame' if lim==10 else f'top {lim}')}⸻</b>\n\n"
         for i, u in enumerate(data, 1):
-            uid = u.get('user_id', u.get('_id')); n = escape(u.get('first_name', 'Unknown'))[:15]; c = u.get("character_count", 0)
+            uid = u.get('user_id', u.get('_id')); n = escape(u.get('first_name', 'Unknown'))[:15]
+            c = u.get("character_count", 0); bal = u.get('balance', 0)
             m = f"<a href='tg://user?id={uid}'>{sc(n)}</a>"
-            cap += f"<b>{badge(i)}</b> {m}\n{bar(c, data[0]['character_count'], 10)} {c:,}\n"
+            cap += f"<b>{badge(i)}</b> {m}\n{bar(c, data[0]['character_count'], 10)} {c:,} ᴄʜᴀʀꜱ | 💰{bal:,}\n"
         cap += f"\n<i>{sc('top')} {lim}</i>"
 
         if lim==10:
@@ -130,13 +136,14 @@ async def my_rank(update: Update, context: CallbackContext, edit=False):
             return await msg.edit_text(cap, parse_mode='HTML', reply_markup=btns)
 
         cc = len(user.get('characters', []))
+        bal = user.get('balance', 0)
         hi = await user_collection.count_documents({"characters": {"$exists": True, "$type": "array"}, "$expr": {"$gt": [{"$size": "$characters"}, cc]}})
         r = hi+1; tot = await user_collection.count_documents({"characters": {"$exists": True, "$type": "array"}})
         n = escape(user.get('first_name', 'Unknown')); m = f"<a href='tg://user?id={uid}'>{sc(n)}</a>"
         pct = ((tot-r)/tot*100) if tot>0 else 0
         tier = "🌟ʟᴇɢᴇɴᴅ" if r==1 else "💎ᴍᴀꜱᴛᴇʀ" if r<=10 else "💠ᴅɪᴀᴍᴏɴᴅ" if pct>=90 else "🔷ᴘʟᴀᴛɪɴᴜᴍ" if pct>=75 else "🟡ɢᴏʟᴅ" if pct>=50 else "⚪ꜱɪʟᴠᴇʀ" if pct>=25 else "🟤ʙʀᴏɴᴢᴇ"
 
-        cap = f"<a href='{vid}'>&#8205;</a><b>⸻{sc('profile')}⸻</b>\n\n{m} {tier}\n\n{sc('rank')}: <b>#{r:,}</b>/{tot:,}\n{sc('badge')}: <b>{badge(r)}</b>\n{sc('chars')}: <b>{cc:,}</b>\n{sc('percentile')}: <b>ᴛᴏᴘ{100-pct:.1f}%</b>\n\n{bar(pct, 100, 12)}\n"
+        cap = f"<a href='{vid}'>&#8205;</a><b>⸻{sc('profile')}⸻</b>\n\n{m} {tier}\n\n{sc('rank')}: <b>#{r:,}</b>/{tot:,}\n{sc('badge')}: <b>{badge(r)}</b>\n{sc('chars')}: <b>{cc:,}</b>\n{sc('balance')}: <b>💰{bal:,}</b>\n{sc('percentile')}: <b>ᴛᴏᴘ{100-pct:.1f}%</b>\n\n{bar(pct, 100, 12)}\n"
 
         btns = InlineKeyboardMarkup([[InlineKeyboardButton("🔄", callback_data="lb_mr"), InlineKeyboardButton("🏆", callback_data="lb_g")], [InlineKeyboardButton("❌", callback_data="lb_close")]])
         await msg.edit_text(cap, parse_mode='HTML', reply_markup=btns)
