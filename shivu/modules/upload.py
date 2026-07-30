@@ -457,18 +457,61 @@ class ImageUploader:
 
 
 class CatboxUploader:
-    """Uploads videos to catbox.moe. No practical size/type restriction like ImgBB,
-    so this is used exclusively for the VIDEO media type."""
+    """Uploads videos. Catbox now actively blocks anonymous uploads from
+    datacenter/VPS IPs (their own anti-abuse policy, effective 2026), which is
+    what an AWS EC2 box looks like to them - no header ever fixes that.
+    Pixeldrain is tried first since it isn't subject to that block and
+    supports range requests (needed for Telegram to stream the video), with
+    Catbox kept as a fallback for non-datacenter deployments."""
 
-    UPLOAD_URL = "https://catbox.moe/user/api.php"
+    CATBOX_UPLOAD_URL = "https://catbox.moe/user/api.php"
+    PIXELDRAIN_UPLOAD_URL = "https://pixeldrain.com/api/file"
 
     HEADERS = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Origin': 'https://catbox.moe',
-        'Referer': 'https://catbox.moe/'
+        'Accept-Language': 'en-US,en;q=0.9'
     }
+
+    def __init__(self):
+        self.services: List[Tuple[str, Callable[[bytes, str], object]]] = [
+            ("Pixeldrain", self._upload_to_pixeldrain),
+            ("Catbox", self._upload_to_catbox),
+        ]
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    async def _upload_to_pixeldrain(self, file_bytes: bytes, filename: str) -> Optional[str]:
+        try:
+            async with aiohttp.ClientSession() as session:
+                data = aiohttp.FormData()
+                data.add_field(
+                    'file',
+                    io.BytesIO(file_bytes),
+                    filename=filename or "video.mp4"
+                )
+
+                async with session.post(
+                    self.PIXELDRAIN_UPLOAD_URL,
+                    data=data,
+                    headers=self.HEADERS,
+                    timeout=aiohttp.ClientTimeout(total=Config.UPLOAD_TIMEOUT)
+                ) as response:
+                    if response.status in (200, 201):
+                        result = await response.json()
+                        file_id = result.get('id')
+                        if file_id:
+                            logger.debug("Pixeldrain upload successful")
+                            return f"https://pixeldrain.com/api/file/{file_id}"
+                        logger.warning(f"Pixeldrain unexpected response: {result}")
+                    elif response.status == 429:
+                        logger.warning("Pixeldrain rate limited, will retry...")
+                        raise Exception("Rate limited")
+                    else:
+                        logger.warning("Pixeldrain upload returned status %s", response.status)
+        except Exception as e:
+            logger.warning(f"Pixeldrain attempt failed: {e}")
+            raise
+        return None
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     async def _upload_to_catbox(self, file_bytes: bytes, filename: str) -> Optional[str]:
@@ -483,7 +526,7 @@ class CatboxUploader:
                 )
 
                 async with session.post(
-                    self.UPLOAD_URL,
+                    self.CATBOX_UPLOAD_URL,
                     data=data,
                     headers=self.HEADERS,
                     timeout=aiohttp.ClientTimeout(total=Config.UPLOAD_TIMEOUT)
@@ -498,7 +541,7 @@ class CatboxUploader:
                         logger.warning("Catbox rate limited, will retry...")
                         raise Exception("Rate limited")
                     elif response.status == 412:
-                        logger.warning("Catbox rejected request (412), will retry...")
+                        logger.warning("Catbox rejected request (412 - datacenter IP block)")
                         raise Exception("Precondition failed")
                     else:
                         logger.warning("Catbox upload returned status %s", response.status)
@@ -508,11 +551,15 @@ class CatboxUploader:
         return None
 
     async def upload(self, file_bytes: bytes, filename: str = "") -> Optional[str]:
-        try:
-            return await self._upload_to_catbox(file_bytes, filename)
-        except Exception as e:
-            logger.warning(f"Catbox upload failed after retries: {e}")
-            return None
+        for service_name, upload_func in self.services:
+            try:
+                url = await upload_func(file_bytes, filename)
+                if url:
+                    return url
+            except Exception as e:
+                logger.warning(f"{service_name} upload failed after retries: {e}")
+                continue
+        return None
 
     async def upload_with_progress(self, file_bytes: bytes, filename: str = "", callback=None) -> Optional[str]:
         total_size = len(file_bytes)
