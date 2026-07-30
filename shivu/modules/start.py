@@ -99,17 +99,17 @@ def category_view(cat_key: str, page: int = 1):
 
 
 async def credits_view(context: CallbackContext):
-    kb = []
-    for name, username in CREDITS_USERS:
-        try:
-            user_id = (await context.bot.get_chat(username)).id
-            url = f'@iMSASUKESi'  # opens profile card, not DM
-        except (BadRequest, Forbidden) as e:
-            LOGGER.error(f"Could not resolve {username}: {e}")
-            url = f'{username.lstrip("@")}'
-        kb.append([InlineKeyboardButton(name, url=url)])
-    kb.append([InlineKeyboardButton("BACK", callback_data='sxc_back')])
-    return "𝗦𝘂𝗱𝗼:", InlineKeyboardMarkup(kb)
+    text = (
+        "𝗦𝘂𝗱𝗼:\n\n"
+        "• ＩＭ 𖣘 ＵＣＨＩＨＡ\n"
+        "@iMSASUKESi"
+    )
+
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("BACK", callback_data="sxc_back")]
+    ])
+
+    return text, kb
 
 
 def _new_user_doc(user_id, first_name, username):
