@@ -65,8 +65,11 @@ async def top_balance(update: Update, context: CallbackContext, edit=False):
     if not data:
         return await send_or_edit(update, context, sc("no data."), None, edit)
 
-    rows = [f"{i}. {escape(u.get('first_name', 'Unknown'))} - Ŧ{u.get('balance', 0):,}"
-            for i, u in enumerate(data, 1)]
+    rows = []
+    for i, u in enumerate(data, 1):
+        name = u.get('first_name', 'Unknown')
+        link = mention_html(u['id'], name)
+        rows.append(f"{i}. {link} - Ŧ{u.get('balance', 0):,}")
     text = format_list("users by coins", rows)
     await send_or_edit(update, context, text, back_close_buttons("lb_bal"), edit)
 
