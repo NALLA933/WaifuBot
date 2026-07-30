@@ -280,7 +280,6 @@ async def guess(update: Update, context: CallbackContext) -> None:
     f"🌸 𝗡𝗔𝗠𝗘: {escape(character.get('name', 'Unknown'))}\n"
     f"💮 𝗥𝗔𝗥𝗜𝗧𝗬: {escape(r_emoji)} {escape(r_name)}\n"
     f"❇️ 𝗔𝗡𝗜𝗠𝗘: {escape(character.get('anime', 'Unknown'))}\n\n"
-    f"⌛️ 𝗧𝗜𝗠𝗘 𝗧𝗔𝗞𝗘𝗡: {time_taken}s\n\n"
     "⛩ Check your /harem Now"
 )
         kb = InlineKeyboardMarkup([[InlineKeyboardButton("🪼 ʜᴀʀᴇᴍ", switch_inline_query_current_chat=f"collection.{user_id}")]])
