@@ -44,11 +44,11 @@ async def generate_unique_code(attempts: int = 10) -> str:
     for _ in range(attempts):
         p1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
         p2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-        code = f"alisa-{p1}-{p2}"
+        code = f"ALISA-{p1}-{p2}"
         if not await codes_collection.find_one({'code': code}):
             return code
     p1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-    return f"alisa-{p1}-{int(time.time()) % 10000:04d}"
+    return f"ALISA-{p1}-{int(time.time()) % 10000:04d}"
 
 
 async def send_log(context: ContextTypes.DEFAULT_TYPE, text: str) -> None:
@@ -203,11 +203,11 @@ async def redeem_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await msg.reply_text("⏳ <b>Wait 2 seconds between redeems.</b>", parse_mode=ParseMode.HTML)
         return
     if not context.args:
-        await msg.reply_text("Usage: <code>/redeem SIYA-XXXX-XXXX</code>", parse_mode=ParseMode.HTML)
+        await msg.reply_text("Usage: <code>/redeem ALISA-XXXX-XXXX</code>", parse_mode=ParseMode.HTML)
         return
 
     code = context.args[0].strip().upper()
-    if not code.startswith("SIYA-") or len(code) != 14:
+    if not code.startswith("ALISA-") or len(code) != 15:
         await msg.reply_text("❌ <b>Invalid code format.</b>", parse_mode=ParseMode.HTML)
         return
 
