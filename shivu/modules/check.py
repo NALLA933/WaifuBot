@@ -125,16 +125,16 @@ def owners_caption(char: Char, owners: List[Dict], page: int, gcount: int) -> st
     start, end = page * USERS_PER_PAGE, page * USERS_PER_PAGE + USERS_PER_PAGE
     total_pages = (len(owners) + USERS_PER_PAGE - 1) // USERS_PER_PAGE
     lines = [
-        "🏆 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗢𝗪𝗡𝗘𝗥𝗦:",
-        f"◈𝗡𝗔𝗠𝗘: {escape(char.name)}  {emoji} {text}",
+        "🏆 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗢𝗪𝗡𝗘𝗥𝗦",
+        "",
+        f"◈𝗡𝗔𝗠𝗘: {escape(char.name)}",
+        f"◈𝗥𝗔𝗥𝗜𝗧𝗬: {emoji} {text}",
         f"◈𝗔𝗡𝗜𝗠𝗘: {escape(char.anime)}",
         "━━━━━━━━━━━━━━━━━",
     ]
     for i, o in enumerate(owners[start:end], start + 1):
         medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}.")
         link = f"<a href='tg://user?id={o['id']}'>{escape(o['first_name'])}</a>"
-        if o['username']:
-            link += f" (@{escape(o['username'])})"
         lines.append(f"{medal} {link} x{o['count']}")
     lines.append(f"\n📄 ᴘᴀɢᴇ {page+1}/{total_pages} • 🌍 {gcount}x ᴛᴏᴛᴀʟ")
     return "\n".join(lines)
@@ -186,7 +186,7 @@ async def send_media(update: Update, char: Char, caption: str, kb) -> None:
         method = update.message.reply_video if char.is_video else update.message.reply_photo
         kwargs = {'caption': caption, 'reply_markup': kb, 'parse_mode': ParseMode.HTML}
         await method(video=char.img_url, **kwargs) if char.is_video else await method(photo=char.img_url, **kwargs)
-    except (TelegramError, Exception) as e:
+    except TelegramError as e:
         await update.message.reply_text(f"{caption}\n\n⚠️ media error: {escape(str(e))}",
                                          reply_markup=kb, parse_mode=ParseMode.HTML)
 
