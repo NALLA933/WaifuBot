@@ -84,10 +84,15 @@ class UserCollection:
     filter_mode: str = "default"
 
     def get_filtered_characters(self) -> List[Character]:
-        if self.filter_mode == "default" or self.filter_mode not in RARITIES:
-            return self.characters
-        target = rarity_display(self.filter_mode)
-        return [c for c in self.characters if c.rarity == target]
+        mode = self.filter_mode
+        if mode in RARITIES:
+            target = rarity_display(mode)
+            return [c for c in self.characters if c.rarity == target]
+        if mode == "latest":
+            return list(reversed(self.characters))
+        if mode == "animes":
+            return sorted(self.characters, key=lambda c: c.anime)
+        return self.characters  # default / waifus / unknown -> show all
 
     def count_by_id(self, characters: List[Character]) -> Dict[str, int]:
         counts: Dict[str, int] = {}
@@ -254,12 +259,12 @@ class HaremHandler:
             )
             return
 
-        filtered.sort(key=lambda c: (c.anime, c.id))
-        total_pages = math.ceil(len(filtered) / self.CHARACTERS_PER_PAGE)
+        display_order = filtered if collection.filter_mode in ("latest",) else sorted(filtered, key=lambda c: (c.anime, c.id))
+        total_pages = math.ceil(len(display_order) / self.CHARACTERS_PER_PAGE)
         page = page if 0 <= page < total_pages else 0
 
         start = page * self.CHARACTERS_PER_PAGE
-        current = filtered[start:start + self.CHARACTERS_PER_PAGE]
+        current = display_order[start:start + self.CHARACTERS_PER_PAGE]
 
         style = await get_user_style_template(user_id)
         opts_dict = await get_user_display_options(user_id)
@@ -268,7 +273,7 @@ class HaremHandler:
         anime_counts = await self.get_anime_counts(list({c.anime for c in current}))
         builder = HaremMessageBuilder(collection, page, total_pages, style, options, update.effective_user.first_name)
         text = builder.build_message(current, anime_counts)
-        markup = self._build_keyboard(page, total_pages, len(filtered), user_id)
+        markup = self._build_keyboard(page, total_pages, len(display_order), user_id)
 
         display_char = collection.favorite if collection.favorite and collection.favorite.img_url else (
             random.choice(filtered) if filtered else None
@@ -292,40 +297,49 @@ class HaremHandler:
 
 
 class ModeHandler:
+    """/smode menu: DEFAULT / RARITY / LATEST / ANIMES / WAIFUS + close, with a
+    ✅ marking whichever mode is currently active for the user."""
+
+    IMG = "https://files.catbox.moe/sgo9in.png"
+    LABELS = {"default": "DEFAULT", "latest": "LATEST", "animes": "ANIMES", "waifus": "WAIFUS"}
+
     def __init__(self):
         self.user_db = db['user_collection_lmaoooo']
 
-    async def show_mode_menu(self, update: Update):
-        keyboard = [[
-            InlineKeyboardButton("ᴅᴇғᴀᴜʟᴛ", callback_data="harem_mode_default"),
-            InlineKeyboardButton("ʀᴀʀɪᴛʏ ғɪʟᴛᴇʀ", callback_data="harem_mode_rarity"),
-        ]]
-        text = (
-            "╭─────────────────╮\n"
-            "│  <b>ᴄᴏʟʟᴇᴄᴛɪᴏɴ ᴍᴏᴅᴇ</b>  │\n"
-            "╰─────────────────╯\n\n"
-            "◆ <b>ᴅᴇғᴀᴜʟᴛ</b>\n  sʜᴏᴡ ᴀʟʟ ᴄʜᴀʀᴀᴄᴛᴇʀs\n\n"
-            "◆ <b>ʀᴀʀɪᴛʏ ғɪʟᴛᴇʀ</b>\n  ғɪʟᴛᴇʀ ʙʏ sᴘᴇᴄɪғɪᴄ ᴛɪᴇʀ\n\n"
-            "┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈\n\n"
-            "💡 <i>Use /hstyle to change visual style</i>"
-        )
-        markup = InlineKeyboardMarkup(keyboard)
+    async def _current_mode(self, user_id: int) -> str:
+        user = await self.user_db.find_one({'id': user_id})
+        return user.get('smode', 'default') if user else 'default'
 
-        if update.message:
-            await update.message.reply_text(text, reply_markup=markup, parse_mode='HTML')
-        elif update.callback_query:
-            await update.callback_query.edit_message_text(text, reply_markup=markup, parse_mode='HTML')
+    def _keyboard(self, current: str) -> InlineKeyboardMarkup:
+        def label(key, text):
+            return f"{text} ✅" if key == current else text
+
+        rarity_label = label("rarity", "RARITY") if current in RARITIES else "RARITY"
+        rows = [
+            [InlineKeyboardButton(label("default", "DEFAULT"), callback_data="harem_mode_default"),
+             InlineKeyboardButton(rarity_label, callback_data="harem_mode_rarity")],
+            [InlineKeyboardButton(label("latest", "LATEST"), callback_data="harem_mode_latest"),
+             InlineKeyboardButton(label("animes", "ANIMES"), callback_data="harem_mode_animes")],
+            [InlineKeyboardButton(label("waifus", "WAIFUS"), callback_data="harem_mode_waifus"),
+             InlineKeyboardButton("🗑", callback_data="harem_mode_close")],
+        ]
+        return InlineKeyboardMarkup(rows)
+
+    async def show_mode_menu(self, update: Update, user_id: int):
+        markup = self._keyboard(await self._current_mode(user_id))
+        caption = "<b>CHOOSE ONE OF WAYS TO SORT YOUR HAREM</b>"
+        if update.callback_query:
+            await update.callback_query.edit_message_caption(caption=caption, reply_markup=markup, parse_mode='HTML')
+        else:
+            await update.message.reply_photo(self.IMG, caption=caption, reply_markup=markup, parse_mode='HTML')
 
     async def show_rarity_menu(self, query):
         buttons = [InlineKeyboardButton(emoji, callback_data=f"harem_mode_{key}") for key, (emoji, _) in RARITIES.items()]
-        keyboard = chunk(buttons, 3) + [[InlineKeyboardButton("🗑 Close", callback_data="harem_mode_back")]]
-        text = (
-            "🪄 <b>HAREM RARITY SELECTOR</b>\n\n"
-            "🎯 Select a rarity below to filter your harem view.\n"
-            "✅ Current selected rarity will be marked.\n\n"
-            "Tap a rarity or close this menu anytime."
+        keyboard = chunk(buttons, 3) + [[InlineKeyboardButton("🔙 Back", callback_data="harem_mode_back")]]
+        await query.edit_message_caption(
+            caption="🪄 <b>Select a rarity to filter your harem</b>",
+            reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML'
         )
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
 
     async def set_mode(self, user_id: int, mode: str):
         await self.user_db.update_one({'id': user_id}, {'$set': {'smode': mode}}, upsert=True)
@@ -333,45 +347,27 @@ class ModeHandler:
     async def handle_mode_callback(self, update: Update, context: CallbackContext):
         query = update.callback_query
         user_id = query.from_user.id
-        data = query.data
+        action = query.data.replace("harem_mode_", "")
 
-        if data == "harem_mode_default":
-            await self.set_mode(user_id, 'default')
-            await query.answer("✓ ᴍᴏᴅᴇ sᴇᴛ ᴛᴏ ᴅᴇғᴀᴜʟᴛ")
-            await query.edit_message_text(
-                "╭─────────────────╮\n│   <b>ᴍᴏᴅᴇ ᴜᴘᴅᴀᴛᴇᴅ</b>   │\n╰─────────────────╯\n\n"
-                "◆ <b>ᴄᴜʀʀᴇɴᴛ ғɪʟᴛᴇʀ</b>\n  ᴀʟʟ ᴄʜᴀʀᴀᴄᴛᴇʀs\n\n"
-                "┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈\n\n   ✦ ᴀᴄᴛɪᴠᴀᴛᴇᴅ ✦\n\n"
-                "sʜᴏᴡɪɴɢ ʏᴏᴜʀ ᴄᴏᴍᴘʟᴇᴛᴇ\nᴄʜᴀʀᴀᴄᴛᴇʀ ᴄᴏʟʟᴇᴄᴛɪᴏɴ",
-                parse_mode='HTML'
-            )
-            return
-
-        if data == "harem_mode_rarity":
-            await self.show_rarity_menu(query)
+        if action == "rarity":
             await query.answer()
-            return
+            return await self.show_rarity_menu(query)
 
-        if data == "harem_mode_back":
-            await self.show_mode_menu(update)
+        if action == "back":
             await query.answer()
-            return
+            return await self.show_mode_menu(update, user_id)
 
-        mode_name = data.replace("harem_mode_", "")
-        if mode_name not in RARITIES:
-            await query.answer("❌ ɪɴᴠᴀʟɪᴅ ʀᴀʀɪᴛʏ", show_alert=True)
-            return
+        if action == "close":
+            await query.answer()
+            return await query.message.delete()
 
-        emoji, name = RARITIES[mode_name]
-        await self.set_mode(user_id, mode_name)
-        await query.answer(f"✓ {name} ғɪʟᴛᴇʀ ᴀᴄᴛɪᴠᴀᴛᴇᴅ")
-        await query.edit_message_text(
-            "╭─────────────────╮\n│  <b>ғɪʟᴛᴇʀ ᴀᴘᴘʟɪᴇᴅ</b>  │\n╰─────────────────╯\n\n"
-            f"      {emoji}\n\n◆ <b>{name}</b>\n\n"
-            "┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈\n\n   ✦ ᴀᴄᴛɪᴠᴀᴛᴇᴅ ✦\n\n"
-            f"ᴅɪsᴘʟᴀʏɪɴɢ ᴏɴʟʏ\n{name.lower()} ᴄʜᴀʀᴀᴄᴛᴇʀs",
-            parse_mode='HTML'
-        )
+        label = self.LABELS.get(action) or (RARITIES[action][1] if action in RARITIES else None)
+        if not label:
+            return await query.answer("❌ ɪɴᴠᴀʟɪᴅ ᴏᴘᴛɪᴏɴ", show_alert=True)
+
+        await self.set_mode(user_id, action)
+        await query.answer(f"✓ {label} sᴇʟᴇᴄᴛᴇᴅ")
+        await self.show_mode_menu(update, user_id)
 
 
 class UnfavHandler:
@@ -478,7 +474,7 @@ async def harem_page_callback(update: Update, context: CallbackContext):
 
 async def smode_command(update: Update, context: CallbackContext):
     try:
-        await mode_handler.show_mode_menu(update)
+        await mode_handler.show_mode_menu(update, update.effective_user.id)
     except TelegramError as e:
         LOGGER.error(f"Error in smode_command: {e}", exc_info=True)
         await update.message.reply_text("⚠️ Error loading mode menu.")
