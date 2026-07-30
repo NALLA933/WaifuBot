@@ -243,7 +243,7 @@ async def cb(update: Update, context: CallbackContext):
 application.add_handler(CommandHandler('topgroups', global_leaderboard, block=False))
 application.add_handler(CommandHandler('topchat', ctop, block=False))
 application.add_handler(CommandHandler(['gstop', 'top'], leaderboard, block=False))
-application.add_handler(CommandHandler(['myrank', 'rank'], my_rank, block=False))
+application.add_handler(CommandHandler(['sprofile', 'rank'], my_rank, block=False))
 application.add_handler(CommandHandler('chatstats', chat_stats, block=False))
 application.add_handler(CommandHandler('stats', stats, block=False))
 application.add_handler(CommandHandler('list', export_users, block=False))
