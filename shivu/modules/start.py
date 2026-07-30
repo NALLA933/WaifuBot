@@ -99,18 +99,20 @@ def category_view(cat_key: str, page: int = 1):
 
 
 async def credits_view(context: CallbackContext):
-    text = (
-        "𝗦𝘂𝗱𝗼:\n\n"
-        "• ＩＭ 𖣘 ＵＣＨＩＨＡ\n"
-        "@iMSASUKESi"
-    )
-
-    kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("BACK", callback_data="sxc_back")]
-    ])
-
-    return text, kb
-
+    kb = []
+    for name, username in CREDITS_USERS:
+        clean_username = username.lstrip('@')
+        try:
+            chat = await context.bot.get_chat(username)
+            # tg://user?id= opens the profile card directly in-app
+            url = f'tg://user?id={chat.id}'
+        except (BadRequest, Forbidden) as e:
+            LOGGER.error(f"Could not resolve {username}: {e}")
+            # fallback: t.me link also opens profile view, not a DM compose box
+            url = f'https://t.me/{clean_username}'
+        kb.append([InlineKeyboardButton(f"{name} (@{clean_username})", url=url)])
+    kb.append([InlineKeyboardButton("BACK", callback_data='sxc_back')])
+    return "𝗦𝘂𝗱𝗼:", InlineKeyboardMarkup(kb)
 
 def _new_user_doc(user_id, first_name, username):
     return {
