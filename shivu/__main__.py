@@ -275,14 +275,14 @@ async def guess(update: Update, context: CallbackContext) -> None:
         r_emoji, r_name = (rarity.split(' ', 1) + [''])[:2] if isinstance(rarity, str) and ' ' in rarity else (rarity, '')
 
         success_message = (
-            "<b>Congratulation 🎉\n"
-            f"{escape(eu.first_name)} 👑 You Got New waifu 🫧\n"
-            f"🌸NAME: {escape(character.get('name', 'Unknown'))} {escape(r_emoji)}\n"
-            f"🧩ANIME: {escape(character.get('anime', 'Unknown'))}\n"
-            f"RAIRTY: {escape(r_emoji)} {escape(r_name)}\n"
-            f"IDID: {escape(str(character.get('id', 'Unknown')))}\n\n"
-            "⛩ Check your /harem Now</b>"
-        )
+    f"✅ {escape(eu.first_name)}, ᴄᴏɴɢʀᴀᴛs 🎉\n"
+    "ʏᴏᴜ ɢᴏᴛ ɴᴇᴡ ᴄʜᴀʀᴀᴄᴛᴇʀ 🫧\n\n"
+    f"🌸 𝗡𝗔𝗠𝗘: {escape(character.get('name', 'Unknown'))}\n"
+    f"💮 𝗥𝗔𝗥𝗜𝗧𝗬: {escape(r_emoji)} {escape(r_name)}\n"
+    f"❇️ 𝗔𝗡𝗜𝗠𝗘: {escape(character.get('anime', 'Unknown'))}\n\n"
+    f"⌛️ 𝗧𝗜𝗠𝗘 𝗧𝗔𝗞𝗘𝗡: {time_taken}s\n\n"
+    "⛩ Check your /harem Now"
+)
         kb = InlineKeyboardMarkup([[InlineKeyboardButton("🪼 ʜᴀʀᴇᴍ", switch_inline_query_current_chat=f"collection.{user_id}")]])
         await update.message.reply_text(success_message, parse_mode='HTML', reply_markup=kb)
         spawn_message_links.pop(chat_id, None)
