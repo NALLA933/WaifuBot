@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from html import escape
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.helpers import mention_html
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 
 from shivu import application, OWNER_ID, user_collection, top_global_groups_collection, group_user_totals_collection
@@ -84,8 +85,8 @@ async def top_characters(update: Update, context: CallbackContext, edit=False):
 
     rows = []
     for i, u in enumerate(data, 1):
-        name = escape(u.get('first_name', 'Unknown'))
-        link = f"<a href='tg://user?id={u['user_id']}'>{name}</a>"
+        name = u.get('first_name', 'Unknown')
+        link = mention_html(u['user_id'], name)
         rows.append(f"{i}. {link} - {u['count']:,} ᴄʜᴀʀꜱ")
 
     text = format_list("users by characters", rows)
@@ -125,8 +126,7 @@ async def my_profile(update: Update, context: CallbackContext, edit=False):
     total = await user_collection.count_documents({"characters": {"$exists": True, "$type": "array"}})
     rank = total - better_than
 
-    name = escape(user.get('first_name', 'Unknown'))
-    link = f"<a href='tg://user?id={user_id}'>{name}</a>"
+    link = update.effective_user.mention_html()
 
     text = (
         f"👤 {sc('profile')} 👤\n\n"
