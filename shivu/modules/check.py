@@ -116,8 +116,7 @@ def card_caption(char: Char, gcount: int) -> str:
         f"◈𝗡𝗔𝗠𝗘: {escape(char.name)}\n"
         f"◈𝗥𝗔𝗥𝗜𝗧𝗬: {emoji} {text}\n"
         f"◈𝗔𝗡𝗜𝗠𝗘: {escape(char.anime)}\n\n"
-        f"🌍 ɢʟᴏʙᴀʟʟʏ ɢʀᴀʙʙᴇᴅ {gcount}x\n\n"
-        "ᴀ ᴘʀᴇᴄɪᴏᴜs ᴄʜᴀʀᴀᴄᴛᴇʀ ᴡᴀɪᴛɪɴɢ ᴛᴏ ᴊᴏɪɴ ʏᴏᴜʀ ᴄᴏʟʟᴇᴄᴛɪᴏɴ"
+        f"🌍 ɢʟᴏʙᴀʟʟʏ ɢʀᴀʙʙᴇᴅ {gcount}x"
     )
 
 
