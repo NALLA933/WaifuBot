@@ -22,7 +22,7 @@ DICE_COOLDOWN = 1800
 PROPOSE_COOLDOWN = 300  
 UPDATE_CHANNEL = "@Anime_Group_hai" 
 LOG_GROUP_ID = -1003139865857     
-PROPOSE_SUCCESS_RATE = 1/6 # 16.6% Chance (Half of Dice Marry)
+PROPOSE_SUCCESS_RATE = 3/6 # 16.6% Chance (Half of Dice Marry)
 
 # --- CUSTOM IMAGES (Har baar random selection ke liye) ---
 PROPOSE_IMAGES = [
@@ -56,7 +56,7 @@ async def is_user_joined(context: CallbackContext, user_id: int) -> bool:
 
 async def get_unique_chars(user_id, rarities=None, count=1): 
     try: 
-        rarities = rarities or ['🟢 Common', '🟣 Rare', '🟡 Legendary'] 
+        rarities = rarities or ['🟢 Common', '🔵 Rare', '🟠 Legendary'] 
         user_data = await user_collection.find_one({'id': user_id}) 
         claimed_ids = [c.get('id') for c in user_data.get('characters', [])] if user_data else [] 
         pipeline = [{'$match': {'rarity': {'$in': rarities}, 'id': {'$nin': claimed_ids}}}, {'$sample': {'size': count}}] 
@@ -150,7 +150,7 @@ async def propose(update: Update, context: CallbackContext):
             parse_mode='HTML'
         )
     else: 
-        chars = await get_unique_chars(user.id, rarities=['💮 Special Edition', '💫 Neon', '✨ Manga', '🎐 Celestial']) 
+        chars = await get_unique_chars(user.id, rarities=['🪽 Celestial', '🥴 Exclusive']) 
         if not chars:
             await user_collection.update_one({'id': user.id}, {'$inc': {'balance': PROPOSAL_COST}})
             return await msg.edit_caption(caption="ʀᴇғᴜɴᴅᴇᴅ! ɴᴏ ʀᴀʀᴇ ᴄʜᴀʀs ʟᴇғᴛ.")
