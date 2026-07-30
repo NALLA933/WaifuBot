@@ -230,9 +230,9 @@ async def cb(update: Update, context: CallbackContext):
 
 # ---------- Handlers ----------
 
-application.add_handler(CommandHandler('tops', tops_menu, block=False))
+application.add_handler(CommandHandler(['tops', 'top'], tops_menu, block=False))
 application.add_handler(CommandHandler('balancetop', top_balance, block=False))
-application.add_handler(CommandHandler(['chartop', 'top'], top_characters, block=False))
+application.add_handler(CommandHandler('chartop', top_characters, block=False))
 application.add_handler(CommandHandler(['gtop', 'topgroups'], top_groups, block=False))
 application.add_handler(CommandHandler(['sprofile', 'rank'], my_profile, block=False))
 application.add_handler(CommandHandler('stats', stats, block=False))
