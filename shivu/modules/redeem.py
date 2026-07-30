@@ -44,7 +44,7 @@ async def generate_unique_code(attempts: int = 10) -> str:
     for _ in range(attempts):
         p1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
         p2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-        code = f"SIYA-{p1}-{p2}"
+        code = f"alisa-{p1}-{p2}"
         if not await codes_collection.find_one({'code': code}):
             return code
     p1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
