@@ -56,7 +56,7 @@ CATEGORIES = {
     ]),
 }
 
-CREDITS_USERS = [("ＩＭ 𖣘 ＵＣＨＩＨＡ", "@iMSASUKESi")]
+
 
 
 async def is_force_sub_member(user_id, context: CallbackContext):
@@ -97,20 +97,17 @@ def category_view(cat_key: str, page: int = 1):
     kb = ([nav] if nav else []) + [[InlineKeyboardButton("Back to Help Menu", callback_data='sxc_menu')]]
     return text, InlineKeyboardMarkup(kb)
 
+CREDITS_USERS = [
+    ("ＩＭ 𖣘 ＵＣＨＩＨＡ", "iMSASUKESi", 7657218453),  # replace with real numeric id
+]
+
 async def credits_view(context: CallbackContext):
     kb = []
-    for name, username in CREDITS_USERS:
-        clean_username = username.lstrip('@')
-        try:
-            chat = await context.bot.get_chat(username)
-            url = f'tg://user?id={chat.id}'
-            kb.append([InlineKeyboardButton(f"@{clean_username}", url=url)])
-        except (BadRequest, Forbidden) as e:
-            LOGGER.error(f"Could not resolve {username}, skipping button: {e}")
-            # no t.me fallback — button is simply omitted if we can't get their ID
+    for name, username, user_id in CREDITS_USERS:
+        url = f'tg://user?id={user_id}'
+        kb.append([InlineKeyboardButton(f"@{username}", url=url)])
     kb.append([InlineKeyboardButton("BACK", callback_data='sxc_back')])
     return "𝗦𝘂𝗱𝗼:", InlineKeyboardMarkup(kb)
-
 def _new_user_doc(user_id, first_name, username):
     return {
         "id": user_id, "first_name": first_name, "username": username,
