@@ -106,7 +106,7 @@ async def credits_view(context: CallbackContext):
             url = f'@iMSASUKESi'  # opens profile card, not DM
         except (BadRequest, Forbidden) as e:
             LOGGER.error(f"Could not resolve {username}: {e}")
-            url = f'https://t.me/{username.lstrip("@")}'
+            url = f'{username.lstrip("@")}'
         kb.append([InlineKeyboardButton(name, url=url)])
     kb.append([InlineKeyboardButton("BACK", callback_data='sxc_back')])
     return "𝗦𝘂𝗱𝗼:", InlineKeyboardMarkup(kb)
