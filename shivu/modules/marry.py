@@ -169,9 +169,9 @@ async def propose(update: Update, context: CallbackContext):
     caption = (
         f"<b>{char['name']} ʜᴀꜱ ᴀᴄᴄᴇᴘᴛᴇᴅ ʏᴏᴜʀ ᴘʀᴏᴘᴏꜱᴀʟ! 😇</b>\n"
         f"☘️ 𝙉𝙖𝙢𝙚: {char['name']}\n"
-        f"🵿 𝙍𝙖𝙧𝙞𝙩𝙮: {char['rarity']}\n"
-        f"💠 𝘼𝙣𝙞𝙢𝙚: {char.get('anime', 'Unknown')}\n"
-        f"🆔 ɪᴅ: <code>{char['id']}</code>"
+        f"🏵️ 𝙍𝙖𝙧𝙞𝙩𝙮: {char['rarity']}\n"
+        f"🎞 𝘼𝙣𝙞𝙢𝙚:  {char.get('anime', 'Unknown')}\n"
+        f"🆔 𝙄𝘿: {char['id']}"
     )
     await update.message.reply_photo(char["img_url"], caption=caption, parse_mode="HTML")
     await send_win_log(context, user, char, "propose")
