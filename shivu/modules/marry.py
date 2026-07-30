@@ -9,7 +9,7 @@ from shivu import application, user_collection, collection, LOGGER
 # NOTE: adjust this import to match wherever RARITIES/rarity_display actually live
 # (e.g. shivu.modules.harem). Centralizing here stops rarity strings from
 # silently drifting out of sync with what's stored in the DB.
-from shivu.modules.hstyle import RARITIES, rarity_display
+from shivu.modules.harem import RARITIES, rarity_display
 
 # ---------------- CONFIG ----------------
 OWNER_ID = 7657218453
