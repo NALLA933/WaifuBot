@@ -456,8 +456,73 @@ class ImageUploader:
         return result
 
 
-# Shared instance used across the upload/update handlers
+class CatboxUploader:
+    """Uploads videos to catbox.moe. No practical size/type restriction like ImgBB,
+    so this is used exclusively for the VIDEO media type."""
+
+    UPLOAD_URL = "https://catbox.moe/user/api.php"
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    async def _upload_to_catbox(self, file_bytes: bytes, filename: str) -> Optional[str]:
+        try:
+            async with aiohttp.ClientSession() as session:
+                data = aiohttp.FormData()
+                data.add_field('reqtype', 'fileupload')
+                data.add_field(
+                    'fileToUpload',
+                    io.BytesIO(file_bytes),
+                    filename=filename or "video.mp4"
+                )
+
+                async with session.post(
+                    self.UPLOAD_URL,
+                    data=data,
+                    timeout=aiohttp.ClientTimeout(total=Config.UPLOAD_TIMEOUT)
+                ) as response:
+                    if response.status == 200:
+                        text = (await response.text()).strip()
+                        if text.startswith("https://files.catbox.moe/"):
+                            logger.debug("Catbox upload successful")
+                            return text
+                        logger.warning(f"Catbox unexpected response: {text}")
+                    elif response.status == 429:
+                        logger.warning("Catbox rate limited, will retry...")
+                        raise Exception("Rate limited")
+                    else:
+                        logger.warning("Catbox upload returned status %s", response.status)
+        except Exception as e:
+            logger.warning(f"Catbox attempt failed: {e}")
+            raise
+        return None
+
+    async def upload(self, file_bytes: bytes, filename: str = "") -> Optional[str]:
+        try:
+            return await self._upload_to_catbox(file_bytes, filename)
+        except Exception as e:
+            logger.warning(f"Catbox upload failed after retries: {e}")
+            return None
+
+    async def upload_with_progress(self, file_bytes: bytes, filename: str = "", callback=None) -> Optional[str]:
+        total_size = len(file_bytes)
+        if callback:
+            await callback(0, total_size)
+
+        result = await self.upload(file_bytes, filename)
+
+        if callback:
+            await callback(total_size, total_size)
+
+        return result
+
+
+# Shared instances used across the upload/update handlers
 image_uploader = ImageUploader()
+catbox_uploader = CatboxUploader()
+
+
+def get_uploader_for(media_type: MediaType):
+    """Videos go to Catbox; everything else keeps using the ImgBB pipeline."""
+    return catbox_uploader if media_type == MediaType.VIDEO else image_uploader
 
 
 class TelegramUploader:
@@ -790,20 +855,22 @@ class CharacterUploadHandler:
             return
         
         progress = ProgressTracker(processing_msg)
-        await processing_msg.edit_text('⏳ Uploading image...')
+        uploader = get_uploader_for(media_file.media_type)
+        upload_label = "video" if media_file.media_type == MediaType.VIDEO else "image"
+        await processing_msg.edit_text(f'⏳ Uploading {upload_label}...')
         
-        image_url = await image_uploader.upload_with_progress(
+        image_url = await uploader.upload_with_progress(
             media_file.file_bytes,
             media_file.filename,
             progress.update
         )
         
         if not image_url:
-            await processing_msg.edit_text('❌ Image upload failed. Please retry.')
+            await processing_msg.edit_text(f'❌ {upload_label.title()} upload failed. Please retry.')
             return
         
         object.__setattr__(media_file, 'url', image_url)
-        await processing_msg.edit_text('✅ Image uploaded!\n⏳ Creating character...')
+        await processing_msg.edit_text('✅ Uploaded!\n⏳ Creating character...')
         
         character = await CharacterFactory.create_from_args(
             context.args,
@@ -907,16 +974,18 @@ class CharacterUploadHandler:
             )
             return
         
-        await processing_msg.edit_text('⏳ Uploading image...')
+        uploader = get_uploader_for(media_file.media_type)
+        upload_label = "video" if media_file.media_type == MediaType.VIDEO else "image"
+        await processing_msg.edit_text(f'⏳ Uploading {upload_label}...')
         
-        image_url = await image_uploader.upload_with_progress(
+        image_url = await uploader.upload_with_progress(
             file_bytes,
             media_file.filename,
             progress.update
         )
         
         if not image_url:
-            await processing_msg.edit_text('❌ Image upload failed.')
+            await processing_msg.edit_text(f'❌ {upload_label.title()} upload failed.')
             return
         
         object.__setattr__(media_file, 'url', image_url)
@@ -1104,16 +1173,18 @@ class CharacterUpdateHandler:
                 await processing_msg.edit_text('❌ File size exceeds limit.')
                 return None
             
-            await processing_msg.edit_text('⏳ Uploading image...')
+            uploader = get_uploader_for(media_file.media_type)
+            upload_label = "video" if media_file.media_type == MediaType.VIDEO else "image"
+            await processing_msg.edit_text(f'⏳ Uploading {upload_label}...')
             
-            image_url = await image_uploader.upload_with_progress(
+            image_url = await uploader.upload_with_progress(
                 file_bytes,
                 media_file.filename,
                 progress.update
             )
             
             if not image_url:
-                await processing_msg.edit_text('❌ Image upload failed.')
+                await processing_msg.edit_text(f'❌ {upload_label.title()} upload failed.')
                 return None
             
             await processing_msg.edit_text('✅ Re-uploaded!')
