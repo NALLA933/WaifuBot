@@ -136,7 +136,7 @@ async def my_profile(update: Update, context: CallbackContext, edit=False):
         f"{link}\n\n"
         f"{sc('rank')}: <b>#{rank:,}</b>/{total:,}\n"
         f"{sc('characters')}: <b>{char_count:,}</b>\n"
-        f"{sc('balance')}: <b>Ŧ{balance:,}</b>"
+        f"{sc('balance')}: <b>💸{balance:,}</b>"
     )
     await send_or_edit(update, context, text, back_close_buttons("lb_profile"), edit)
 
