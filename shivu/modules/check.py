@@ -112,7 +112,6 @@ def process_search(chars: List[Dict]) -> Dict:
 def card_caption(char: Char, gcount: int) -> str:
     emoji, text = rarity_parts(char.rarity)
     return (
-        "💠 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗜𝗡𝗙𝗢:\n"
         f"◈𝗡𝗔𝗠𝗘: {escape(char.name)}\n"
         f"◈𝗥𝗔𝗥𝗜𝗧𝗬: {emoji} {text}\n"
         f"◈𝗔𝗡𝗜𝗠𝗘: {escape(char.anime)}\n"
